@@ -26,13 +26,19 @@ scripts/  skrip bantu
 
 ## Menjalankan saat development
 
-1. Nyalakan database dan cache:
+1. Aktifkan hook commit (sekali setelah clone):
+
+   ```bash
+   bash scripts/setup-hooks.sh
+   ```
+
+2. Nyalakan database dan cache:
 
    ```bash
    docker compose up -d db redis
    ```
 
-2. Backend:
+3. Backend:
 
    ```bash
    cd backend
@@ -46,7 +52,7 @@ scripts/  skrip bantu
 
    API tersedia di http://localhost:8000.
 
-3. Frontend:
+4. Frontend:
 
    ```bash
    cd frontend
@@ -59,3 +65,11 @@ scripts/  skrip bantu
 
 File `.env` bersifat lokal dan tidak boleh di-commit. Gunakan `.env.example`
 sebagai daftar variabel yang diperlukan.
+
+## Kontribusi
+
+Alur kerja (cabang, Pull Request, format commit), cara menjalankan lint dan tes,
+aturan migrasi Django, aturan kontrak API, dan larangan commit rahasia ada di
+[CONTRIBUTING.md](CONTRIBUTING.md).
+
+Dokumen proyek: [CLAUDE.md](CLAUDE.md), [PRD](docs/PRD.md), [Arsitektur](docs/ARSITEKTUR.md).

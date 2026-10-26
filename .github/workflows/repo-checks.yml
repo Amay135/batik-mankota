@@ -1,0 +1,66 @@
+name: repo-checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  private-files:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fail if personal local files are tracked
+        run: |
+          if git ls-files | grep -E '^(CLAUDE.local.md|PROMPTS.md|SECURITY_REVIEW.md|PERFORMANCE.md)$'; then
+            echo "File lokal pribadi tidak boleh di-commit. Hapus dengan: git rm --cached <file>" >&2
+            exit 1
+          fi
+
+  no-ai-attribution:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check commit attribution (pull request)
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: bash scripts/check-no-ai-attribution.sh "origin/$BASE_REF..HEAD"
+
+      - name: Check commit attribution (push)
+        if: github.event_name == 'push'
+        env:
+          BEFORE: ${{ github.event.before }}
+          SHA: ${{ github.sha }}
+        run: |
+          # Push pertama mengirim before berisi nol semua: periksa semua commit.
+          if printf '%s' "$BEFORE" | grep -Eq '^0+$'; then
+            bash scripts/check-no-ai-attribution.sh
+          else
+            bash scripts/check-no-ai-attribution.sh "$BEFORE..$SHA"
+          fi
+
+      - name: Check pull request body
+        if: github.event_name == 'pull_request'
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          if printf '%s' "$PR_BODY" | grep -Eqi 'generated with .*claude code|claude\.ai/'; then
+            echo "Deskripsi PR memuat atribusi alat AI. Hapus baris 'Generated with Claude Code' dan tautan sesi claude.ai." >&2
+            exit 1
+          fi
+
+  secrets-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

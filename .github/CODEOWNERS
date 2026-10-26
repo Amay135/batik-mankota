@@ -1,0 +1,10 @@
+# Pemilik: @Amay135. Anggota tim ditambahkan nanti.
+# Aturan paling bawah menang bila ada lebih dari satu pola yang cocok.
+
+/backend/                        @Amay135
+/frontend/                       @Amay135
+
+# Pemilik aturan stok: wajib review setiap perubahan di app ini.
+/backend/apps/inventory/         @Amay135
+/CLAUDE.md                       @Amay135
+/docs/                           @Amay135

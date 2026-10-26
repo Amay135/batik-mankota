@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Menghapus baris atribusi alat AI dari pesan commit. Hook lokal; CI tetap memeriksa.
+set -u
+
+msg_file="$1"
+[ -f "$msg_file" ] || exit 0
+
+tmp="${msg_file}.tmp.$$"
+trap 'rm -f "$tmp"' EXIT
+
+awk '
+{
+  low = tolower($0)
+  drop = 0
+  if (low ~ /^co-authored-by:/ && low ~ /claude|anthropic/) drop = 1
+  if (low ~ /^claude-session:/) drop = 1
+  if (low ~ /generated with/ && low ~ /claude code/) drop = 1
+  if (index(low, "🤖 generated with") == 1) drop = 1
+  if (!drop) lines[++n] = $0
+}
+END {
+  while (n > 0 && lines[n] ~ /^[[:space:]]*$/) n--
+  for (i = 1; i <= n; i++) print lines[i]
+}
+' "$msg_file" > "$tmp" && mv "$tmp" "$msg_file"
