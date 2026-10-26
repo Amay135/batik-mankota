@@ -20,6 +20,8 @@ coverage/
 # Django runtime
 media/
 staticfiles/
+db.sqlite3
+*.sqlite3
 
 # Backup database
 *.sql

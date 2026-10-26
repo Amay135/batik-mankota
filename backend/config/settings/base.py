@@ -24,8 +24,10 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "drf_spectacular",
     "corsheaders",
     "apps.accounts",
+    "apps.audit",
     "apps.catalog",
     "apps.orders",
 ]
@@ -114,8 +116,14 @@ REST_FRAMEWORK = {
     # Seluruh marketplace wajib login; endpoint publik harus eksplisit AllowAny.
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
-    "DEFAULT_THROTTLE_RATES": {"auth": "20/min"},
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_THROTTLE_RATES": {"auth": "20/min", "2fa": "5/min"},
     "EXCEPTION_HANDLER": "rest_framework.views.exception_handler",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Batik Mankota API",
+    "VERSION": "1.0.0",
 }
 
 # Aturan bisnis marketplace

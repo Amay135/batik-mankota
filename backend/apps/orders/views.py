@@ -1,10 +1,11 @@
 from django.db import transaction
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
-from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.generics import RetrieveAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.accounts.permissions import IsUser
 from apps.catalog.models import Varian
 
 from . import services
@@ -23,11 +24,15 @@ def respons_keranjang(request):
 
 
 class KeranjangView(APIView):
+    permission_classes = [IsUser]
+
     def get(self, request):
         return respons_keranjang(request)
 
 
 class TambahItemView(APIView):
+    permission_classes = [IsUser]
+
     @transaction.atomic
     def post(self, request):
         try:
@@ -48,6 +53,8 @@ class TambahItemView(APIView):
 
 
 class ItemView(APIView):
+    permission_classes = [IsUser]
+
     def _item(self, request, pk):
         k = services.keranjang_user(request.user)
         try:
@@ -75,6 +82,8 @@ class ItemView(APIView):
 
 
 class VoucherView(APIView):
+    permission_classes = [IsUser]
+
     def post(self, request):
         kode = str(request.data.get("kode", "")).strip().upper()
         try:
@@ -98,6 +107,8 @@ class VoucherView(APIView):
 
 
 class PesananListCreateView(APIView):
+    permission_classes = [IsUser]
+
     def get(self, request):
         qs = Pesanan.objects.filter(user=request.user).prefetch_related("item")
         return Response(PesananSerializer(qs, many=True).data)
@@ -110,6 +121,7 @@ class PesananListCreateView(APIView):
 
 
 class PesananDetailView(RetrieveAPIView):
+    permission_classes = [IsUser]
     serializer_class = PesananSerializer
     lookup_field = "nomor"
 
