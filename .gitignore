@@ -25,17 +25,18 @@ staticfiles/
 *.sql
 *.dump
 
+# Claude Code: pengaturan lokal per anggota (settings.json bersama tetap di-commit)
+.claude/settings.local.json
+.claude/*.local.*
+
 # IDE & OS
 .idea/
 .vscode/
 Thumbs.db
 .DS_Store
 
-# Dokumen perencanaan privat
-/CLAUDE.md
+# Dokumen lokal pribadi (tidak untuk tim)
 /CLAUDE.local.md
-/docs/PRD.md
-/docs/ARSITEKTUR.md
 /PROMPTS.md
 /SECURITY_REVIEW.md
 /PERFORMANCE.md
