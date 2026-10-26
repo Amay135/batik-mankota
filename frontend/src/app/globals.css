@@ -1,0 +1,50 @@
+@import "@fontsource-variable/inter";
+@import "@fontsource/cormorant-garamond/400.css";
+@import "@fontsource/cormorant-garamond/500.css";
+@import "@fontsource/cormorant-garamond/600.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { background: #F5EFE3; }
+  body { @apply bg-krem font-sans text-tinta antialiased; font-size: 13px; }
+  h1, h2, h3 { @apply font-serif font-medium; }
+  button { @apply cursor-pointer; }
+  input, select, button { font: inherit; }
+}
+
+@layer components {
+  .wadah { @apply mx-auto w-full max-w-[1240px] px-10; }
+  .input-mk {
+    @apply h-10 w-full rounded-md border border-garis bg-white px-3 text-[13px] text-tinta
+      placeholder:text-tinta-lembut/60 focus:border-marun focus:outline-none focus:ring-1 focus:ring-marun;
+  }
+  .label-mk { @apply mb-1.5 block text-[11px] text-tinta-lembut; }
+  .tombol-marun {
+    @apply inline-flex h-10 items-center justify-center gap-2 rounded-md bg-marun px-4 text-[13px] font-medium
+      text-krem transition-colors hover:bg-marun-gelap disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  .tombol-putih {
+    @apply inline-flex h-10 items-center justify-center gap-2 rounded-md border border-garis bg-white px-4
+      text-[13px] font-medium text-tinta transition-colors hover:border-marun disabled:opacity-60;
+  }
+  .bulat {
+    @apply h-3 w-3 shrink-0 cursor-pointer appearance-none rounded-full border border-[#C9BEAB] bg-white
+      checked:border-marun checked:bg-marun;
+  }
+}
+
+input[type="range"].rentang {
+  -webkit-appearance: none; appearance: none; pointer-events: none;
+  position: absolute; left: 0; top: 0; width: 100%; height: 14px; background: transparent; margin: 0;
+}
+input[type="range"].rentang::-webkit-slider-thumb {
+  -webkit-appearance: none; pointer-events: auto; width: 12px; height: 12px; border-radius: 9999px;
+  background: #722F37; border: 2px solid #fff; box-shadow: 0 0 0 1px #722F37; cursor: pointer;
+}
+input[type="range"].rentang::-moz-range-thumb {
+  pointer-events: auto; width: 10px; height: 10px; border-radius: 9999px; background: #722F37;
+  border: 2px solid #fff; box-shadow: 0 0 0 1px #722F37; cursor: pointer;
+}
