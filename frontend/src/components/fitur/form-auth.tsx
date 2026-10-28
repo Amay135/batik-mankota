@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import { ApiError, api, galatPerField } from "@/lib/api";
+import type { Pengguna } from "@/types/skema";
 
 function tujuanAman(next: string | null) {
   return next && next.startsWith("/") && !next.startsWith("//") ? next : "/koleksi";
@@ -24,11 +25,12 @@ export function FormAuth({ mode }: { mode: "masuk" | "daftar" }) {
     e.preventDefault();
     setProses(true); setGalat({}); setUmum("");
     try {
-      await api(daftar ? "/auth/daftar/" : "/auth/masuk/", {
+      const pengguna = await api<Pengguna>(daftar ? "/auth/daftar/" : "/auth/masuk/", {
         method: "POST",
         body: daftar ? f : { email: f.email, password: f.password },
       });
-      router.replace(next);
+      // Admin langsung ke dashboard; guard di sana mengarahkan ke verifikasi 2FA bila belum.
+      router.replace(pengguna.role === "admin" ? "/dashboard" : next);
       router.refresh();
     } catch (err) {
       setGalat(galatPerField(err));

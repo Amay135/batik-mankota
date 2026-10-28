@@ -55,9 +55,4 @@ export interface Pesanan {
   item: { nama: string; slug: string; motif: string; bentuk: string; warna: string; ukuran: string; sku: string; harga: number; jumlah: number; subtotal: number }[];
 }
 
-export interface Pengguna {
-  id: number;
-  email: string;
-  nama_lengkap: string;
-  whatsapp: string;
-}
+export type { Pengguna } from "./skema";

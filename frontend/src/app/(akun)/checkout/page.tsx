@@ -9,5 +9,6 @@ export const metadata: Metadata = { title: "Keranjang & Checkout" };
 export default async function HalamanCheckout() {
   const pengguna = await penggunaSaatIni();
   if (!pengguna) redirect("/masuk");
+  if (pengguna.role !== "user") redirect("/403");
   return <Checkout pengguna={pengguna} />;
 }

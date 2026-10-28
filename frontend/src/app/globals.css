@@ -48,3 +48,61 @@ input[type="range"].rentang::-moz-range-thumb {
   pointer-events: auto; width: 10px; height: 10px; border-radius: 9999px; background: #722F37;
   border: 2px solid #fff; box-shadow: 0 0 0 1px #722F37; cursor: pointer;
 }
+
+/* Token area dashboard (docs/DESIGN.md §2). Tidak dipakai storefront/kasir. */
+[data-area="dashboard"] {
+  --dash-bg: #F4ECDF;
+  --dash-bg-alt: #EBDFCB;
+  --dash-surface: #FFFFFF;
+  --dash-primary: #7B1E2B;
+  --dash-primary-dark: #5E1520;
+  --dash-on-primary: #FFFFFF;
+  --dash-text: #2B1D16;
+  --dash-text-muted: #6E5E52;
+  --dash-border: #DCCDB6;
+  --dash-star: #C9962B;
+  --dash-overlay: rgb(43 29 22 / 0.45);
+}
+
+@layer components {
+  [data-area="dashboard"] .panel-dasbor { @apply rounded-lg border border-dash-border bg-dash-surface p-5; }
+  [data-area="dashboard"] .input-dasbor {
+    @apply h-10 w-full rounded-md border border-dash-border bg-dash-surface px-3 text-[13px] text-dash-text
+      placeholder:text-dash-text-muted focus:border-dash-primary focus:outline-none focus:ring-1 focus:ring-dash-primary;
+  }
+  [data-area="dashboard"] .label-dasbor { @apply mb-1.5 block text-[11px] text-dash-text-muted; }
+  [data-area="dashboard"] .tombol-utama {
+    @apply inline-flex h-10 items-center justify-center gap-2 rounded-md bg-dash-primary px-4 text-[13px] font-medium
+      text-dash-on-primary transition-colors hover:bg-dash-primary-dark disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  [data-area="dashboard"] .tombol-sekunder {
+    @apply inline-flex h-10 items-center justify-center gap-2 rounded-md border border-dash-border bg-dash-surface px-4
+      text-[13px] font-medium text-dash-text transition-colors hover:border-dash-primary disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  [data-area="dashboard"] .tabel-dasbor { @apply w-full border-collapse text-[12px]; }
+  [data-area="dashboard"] .tabel-dasbor th {
+    @apply border-b border-dash-border px-3 py-2 text-left text-[11px] font-medium uppercase tracking-wide text-dash-text-muted;
+  }
+  [data-area="dashboard"] .tabel-dasbor td { @apply border-b border-dash-border px-3 py-2.5 align-top; }
+  [data-area="dashboard"] .lencana { @apply inline-flex items-center rounded-full border px-2 py-0.5 text-[10.5px] font-medium; }
+  [data-area="dashboard"] .lencana-utama { @apply border-dash-primary text-dash-primary; }
+  [data-area="dashboard"] .lencana-redup { @apply border-dash-border text-dash-text-muted; }
+  [data-area="dashboard"] .galat-dasbor { @apply text-[11px] text-dash-primary; }
+}
+
+[data-area="dashboard"] a:focus-visible,
+[data-area="dashboard"] button:focus-visible,
+[data-area="dashboard"] [tabindex]:focus-visible {
+  outline: 2px solid var(--dash-primary);
+  outline-offset: 2px;
+}
+[data-area="dashboard"] dialog {
+  width: calc(100% - 2rem);
+  max-width: 28rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--dash-border);
+  background: var(--dash-surface);
+  color: var(--dash-text);
+  padding: 0;
+}
+[data-area="dashboard"] dialog::backdrop { background: var(--dash-overlay); }
