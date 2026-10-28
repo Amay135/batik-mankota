@@ -12,6 +12,13 @@ node_modules/
 dist/
 coverage/
 
+# Frontend generated & test artifacts
+/frontend/.openapi.yaml
+/frontend/e2e/screenshots/
+/frontend/playwright-report/
+/frontend/test-results/
+/frontend/tsconfig.tsbuildinfo
+
 # Environment
 .env
 .env.*

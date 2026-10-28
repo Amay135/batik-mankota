@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
-import { apiServer } from "@/lib/api-server";
+import { apiServer, penggunaSaatIni } from "@/lib/api-server";
 import { NAMA_WARNA, rupiah } from "@/lib/format";
 import type { Pesanan } from "@/types/pesanan";
 
@@ -10,6 +10,9 @@ export const metadata: Metadata = { title: "Pesanan Anda" };
 
 export default async function HalamanPesanan({ params }: { params: Promise<{ nomor: string }> }) {
   const { nomor } = await params;
+  const pengguna = await penggunaSaatIni();
+  if (!pengguna) redirect("/masuk");
+  if (pengguna.role !== "user") redirect("/403");
   const p = await apiServer<Pesanan | null>(`/pesanan/${nomor}/`);
   if (!p) notFound();
   const batas = new Date(p.batas_bayar).toLocaleString("id-ID", { dateStyle: "long", timeStyle: "short", timeZone: "Asia/Jakarta" });
