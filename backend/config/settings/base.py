@@ -100,7 +100,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # dan CSRF berlaku normal. CORS tetap disiapkan untuk akses langsung.
 CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS", "http://localhost:3000")
 CORS_ALLOW_CREDENTIALS = True
-CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
+# Terpisah dari CORS: produksi wajib mengisi origin https lewat env, tanpa wildcard.
+CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS")
 CSRF_COOKIE_HTTPONLY = False  # dibaca JS untuk header X-CSRFToken
 CSRF_COOKIE_SAMESITE = "Lax"
 SESSION_COOKIE_SAMESITE = "Lax"
