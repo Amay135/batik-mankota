@@ -9,6 +9,7 @@ import { SeniProduk } from "@/components/ui/seni-produk";
 import { ApiError, api, galatPerField } from "@/lib/api";
 import { NAMA_WARNA, rupiah } from "@/lib/format";
 import { SITUS } from "@/lib/situs";
+import { batasJumlah } from "@/lib/stok";
 import { BANK, PROVINSI } from "@/lib/wilayah";
 import type { Pengguna, Pesanan } from "@/types/pesanan";
 
@@ -142,7 +143,7 @@ export function Checkout({ pengguna }: { pengguna: Pengguna }) {
                   <div className="flex h-7 items-center gap-2 rounded border border-garis px-1.5">
                     <button aria-label="Kurangi" disabled={it.jumlah <= 1} onClick={() => aksi(() => ubahJumlah(it.id, it.jumlah - 1))} className="disabled:opacity-30"><Minus size={11} /></button>
                     <span className="w-3 text-center text-[11px]">{it.jumlah}</span>
-                    <button aria-label="Tambah" disabled={it.jumlah >= it.varian.stok} onClick={() => aksi(() => ubahJumlah(it.id, it.jumlah + 1))} className="disabled:opacity-30"><Plus size={11} /></button>
+                    <button aria-label="Tambah" disabled={it.jumlah >= batasJumlah(it.varian)} onClick={() => aksi(() => ubahJumlah(it.id, it.jumlah + 1))} className="disabled:opacity-30"><Plus size={11} /></button>
                   </div>
                   <p className="w-[78px] text-right text-[12px] font-semibold">{rupiah(it.subtotal)}</p>
                   <button aria-label={`Hapus ${it.produk.nama}`} onClick={() => aksi(() => hapus(it.id))} className="text-tinta-lembut hover:text-marun"><Trash2 size={13} /></button>

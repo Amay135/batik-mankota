@@ -3,7 +3,7 @@ import type { Ukuran, Warna } from "./katalog";
 export interface ItemKeranjang {
   id: number;
   jumlah: number;
-  varian: { id: number; sku: string; warna: Warna; ukuran: Ukuran; stok: number };
+  varian: { id: number; sku: string; warna: Warna; ukuran: Ukuran; stok?: number; status_stok?: "Tersedia" | "Tinggal sedikit" | "Habis" };
   produk: { slug: string; nama: string; motif: string; bentuk: string; warna_utama: Warna; foto_utama: string | null };
   harga: number;
   subtotal: number;

@@ -11,7 +11,7 @@ export default async function LayoutAkun({ children }: { children: React.ReactNo
   if (!pengguna) redirect("/masuk");
 
   return (
-    <KeranjangProvider>
+    <KeranjangProvider role={pengguna.role}>
       <PengumumanBar />
       <HeaderSitus pengguna={pengguna} />
       <main>{children}</main>

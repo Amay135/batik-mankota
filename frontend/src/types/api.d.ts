@@ -594,6 +594,7 @@ export interface components {
             sku: string;
             /** Format: int64 */
             stok?: number;
+            readonly status_stok: string;
         };
         /**
          * @description * `indigo` - Indigo

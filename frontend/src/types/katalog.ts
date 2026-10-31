@@ -23,7 +23,8 @@ export interface Varian {
   warna: Warna;
   ukuran: Ukuran;
   sku: string;
-  stok: number;
+  stok?: number;
+  status_stok?: "Tersedia" | "Tinggal sedikit" | "Habis";
 }
 
 export interface ProdukDetail extends ProdukRingkas {

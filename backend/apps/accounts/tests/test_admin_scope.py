@@ -1,3 +1,5 @@
+import re
+
 import pytest
 from django.core.cache import cache
 from django.urls import URLPattern, URLResolver, get_resolver
@@ -134,6 +136,13 @@ def test_registry_entries_have_real_routes():
         view = routes.get(entry["path"])
         assert view is not None, entry
         assert entry["method"].upper() in _methods(view), entry
+
+
+def test_registry_id_memakai_kategori_sah():
+    # ADM-xx = nomor F-ADM-xx di PRD; SEC-xx = kendali keamanan akun tanpa fitur PRD.
+    pola = re.compile(r"^(ADM|SEC)-\d{2}$")
+    for entry in ADMIN_CAPABILITIES:
+        assert pola.fullmatch(entry["id"]), entry
 
 
 def test_admin_routes_permission_matrix(admin, kasir, user):
@@ -465,3 +474,7 @@ def test_customer_endpoints_reject_admin_kasir(admin, kasir):
 @pytest.mark.skip(reason="cost_price belum ada; ADM-10 fase 1")
 def test_cost_price_hanya_untuk_admin():
     pass
+
+
+def test_django_admin_tidak_tersedia():
+    assert APIClient().get("/admin/").status_code == 404

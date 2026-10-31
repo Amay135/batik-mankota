@@ -8,15 +8,19 @@ import { Ornamen } from "@/components/ui/ornamen";
 import { SeniProduk } from "@/components/ui/seni-produk";
 import { ApiError } from "@/lib/api";
 import { NAMA_WARNA, rupiah, WARNA_HEX } from "@/lib/format";
-import type { ProdukDetail, Ukuran } from "@/types/katalog";
+import { batasJumlah } from "@/lib/stok";
+import type { ProdukDetail, Ukuran, Varian } from "@/types/katalog";
 
 import { useKeranjang } from "./keranjang-konteks";
 
 const URUTAN_UKURAN: Ukuran[] = ["S", "M", "L", "XL", "XXL", "ALL"];
 
-export function DetailProduk({ p }: { p: ProdukDetail }) {
+export function DetailProduk({ p, role }: { p: ProdukDetail; role: "admin" | "kasir" | "user" }) {
   const router = useRouter();
   const { tambah } = useKeranjang();
+
+  const bolehBeli = role === "user";
+  const tersedia = (v: Varian) => (v.stok !== undefined ? v.stok > 0 : v.status_stok !== "Habis");
 
   const warnaList = useMemo(() => [...new Set(p.varian.map((v) => v.warna))], [p.varian]);
   const [warna, setWarna] = useState(p.warna_utama);
@@ -24,7 +28,7 @@ export function DetailProduk({ p }: { p: ProdukDetail }) {
     () => p.varian.filter((v) => v.warna === warna).sort((a, b) => URUTAN_UKURAN.indexOf(a.ukuran) - URUTAN_UKURAN.indexOf(b.ukuran)),
     [p.varian, warna],
   );
-  const awal = ukuranWarna.find((v) => v.ukuran === "L" && v.stok > 0) ?? ukuranWarna.find((v) => v.stok > 0) ?? ukuranWarna[0];
+  const awal = ukuranWarna.find((v) => v.ukuran === "L" && tersedia(v)) ?? ukuranWarna.find(tersedia) ?? ukuranWarna[0];
   const [ukuran, setUkuran] = useState<Ukuran>(awal?.ukuran ?? "ALL");
   const [jumlah, setJumlah] = useState(1);
   const [foto, setFoto] = useState(0);
@@ -34,12 +38,12 @@ export function DetailProduk({ p }: { p: ProdukDetail }) {
 
   const varian = ukuranWarna.find((v) => v.ukuran === ukuran) ?? ukuranWarna[0];
   const satuUkuran = ukuranWarna.length === 1 && ukuranWarna[0].ukuran === "ALL";
-  const habis = !varian || varian.stok < 1;
+  const habis = !varian || !tersedia(varian);
 
   function gantiWarna(w: typeof warna) {
     setWarna(w);
     const daftar = p.varian.filter((v) => v.warna === w);
-    const sama = daftar.find((v) => v.ukuran === ukuran && v.stok > 0) ?? daftar.find((v) => v.stok > 0) ?? daftar[0];
+    const sama = daftar.find((v) => v.ukuran === ukuran && tersedia(v)) ?? daftar.find(tersedia) ?? daftar[0];
     setUkuran(sama?.ukuran ?? "ALL");
     setJumlah(1);
     setPesan(null);
@@ -67,10 +71,12 @@ export function DetailProduk({ p }: { p: ProdukDetail }) {
       <div>
         <div className="relative aspect-[1/1.02] overflow-hidden rounded-[4px] bg-krem-gelap">
           <SeniProduk motif={p.motif} bentuk={p.bentuk} warna={warna} jenis={p.foto[foto]?.jenis ?? "depan"} foto={p.foto[foto]?.url} />
-          <button onClick={() => setSuka((s) => !s)} aria-label="Simpan ke favorit" aria-pressed={suka}
-            className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm">
-            <Heart size={15} className={suka ? "fill-marun text-marun" : "text-tinta"} />
-          </button>
+          {bolehBeli && (
+            <button onClick={() => setSuka((s) => !s)} aria-label="Simpan ke favorit" aria-pressed={suka}
+              className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm">
+              <Heart size={15} className={suka ? "fill-marun text-marun" : "text-tinta"} />
+            </button>
+          )}
         </div>
         <div className="mt-2.5 grid grid-cols-4 gap-2.5">
           {p.foto.map((f, i) => (
@@ -126,11 +132,11 @@ export function DetailProduk({ p }: { p: ProdukDetail }) {
             </div>
             <div className="flex gap-2">
               {ukuranWarna.map((v) => (
-                <button key={v.id} disabled={v.stok < 1} onClick={() => { setUkuran(v.ukuran); setJumlah(1); setPesan(null); }}
+                <button key={v.id} disabled={!tersedia(v)} onClick={() => { setUkuran(v.ukuran); setJumlah(1); setPesan(null); }}
                   aria-pressed={v.ukuran === ukuran}
                   className={`h-9 w-[52px] rounded border text-[12px] transition-colors ${
                     v.ukuran === ukuran ? "border-marun bg-marun text-krem"
-                    : v.stok < 1 ? "cursor-not-allowed border-garis bg-transparent text-tinta-lembut/40 line-through"
+                    : !tersedia(v) ? "cursor-not-allowed border-garis bg-transparent text-tinta-lembut/40 line-through"
                     : "border-garis bg-white hover:border-marun"}`}>
                   {v.ukuran}
                 </button>
@@ -141,21 +147,27 @@ export function DetailProduk({ p }: { p: ProdukDetail }) {
         {varian && (
           <p className="mt-3 flex items-center gap-1.5 text-[10.5px] text-tinta-lembut">
             <span className={`h-1.5 w-1.5 rounded-full ${habis ? "bg-marun" : "bg-[#4D8A3F]"}`} />
-            {habis ? "Stok habis" : `Tersedia ${varian.stok} pcs${satuUkuran ? "" : ` untuk ukuran ${varian.ukuran}`}`} · SKU {varian.sku}
+            {habis ? "Stok habis" : varian.stok !== undefined ? `Tersedia ${varian.stok} pcs${satuUkuran ? "" : ` untuk ukuran ${varian.ukuran}`}` : varian.status_stok} · SKU {varian.sku}
           </p>
         )}
 
         <div className="mt-5 flex gap-3">
-          <div className="flex h-10 w-[104px] items-center justify-between rounded-md border border-garis bg-white px-2">
-            <button aria-label="Kurangi" disabled={jumlah <= 1} onClick={() => setJumlah((j) => j - 1)} className="p-1 disabled:opacity-30"><Minus size={13} /></button>
-            <span className="text-[12px]" aria-live="polite">{jumlah}</span>
-            <button aria-label="Tambah" disabled={!varian || jumlah >= varian.stok} onClick={() => setJumlah((j) => j + 1)} className="p-1 disabled:opacity-30"><Plus size={13} /></button>
-          </div>
-          <button className="tombol-marun flex-1" disabled={habis || !!proses} onClick={() => simpan("tambah")}>
-            <ShoppingBag size={14} /> {proses === "tambah" ? "Menambahkan..." : "Tambah ke Keranjang"}
-          </button>
+          {bolehBeli && (
+            <div className="flex h-10 w-[104px] items-center justify-between rounded-md border border-garis bg-white px-2">
+              <button aria-label="Kurangi" disabled={jumlah <= 1} onClick={() => setJumlah((j) => j - 1)} className="p-1 disabled:opacity-30"><Minus size={13} /></button>
+              <span className="text-[12px]" aria-live="polite">{jumlah}</span>
+              <button aria-label="Tambah" disabled={!varian || jumlah >= batasJumlah(varian)} onClick={() => setJumlah((j) => j + 1)} className="p-1 disabled:opacity-30"><Plus size={13} /></button>
+            </div>
+          )}
+          {bolehBeli && (
+            <button className="tombol-marun flex-1" disabled={habis || !!proses} onClick={() => simpan("tambah")}>
+              <ShoppingBag size={14} /> {proses === "tambah" ? "Menambahkan..." : "Tambah ke Keranjang"}
+            </button>
+          )}
         </div>
-        <button className="tombol-putih mt-2.5 w-full" disabled={habis || !!proses} onClick={() => simpan("beli")}>Beli Sekarang</button>
+        {bolehBeli && (
+          <button className="tombol-putih mt-2.5 w-full" disabled={habis || !!proses} onClick={() => simpan("beli")}>Beli Sekarang</button>
+        )}
         {pesan && (
           <p role="status" className={`mt-2.5 text-[11.5px] ${pesan.jenis === "ok" ? "text-[#4D6B3F]" : "text-marun"}`}>{pesan.teks}</p>
         )}

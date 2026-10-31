@@ -77,10 +77,12 @@ export function HeaderSitus({ pengguna }: { pengguna: Pengguna }) {
               </div>
             )}
           </div>
-          <Link href="/checkout" className="flex items-center gap-1.5" aria-label={`Keranjang, ${jumlah} barang`}>
-            <ShoppingBag size={16} strokeWidth={1.6} />
-            <span className="text-[11px]">{jumlah}</span>
-          </Link>
+          {pengguna.role === "user" && (
+            <Link href="/checkout" className="flex items-center gap-1.5" aria-label={`Keranjang, ${jumlah} barang`}>
+              <ShoppingBag size={16} strokeWidth={1.6} />
+              <span className="text-[11px]">{jumlah}</span>
+            </Link>
+          )}
         </div>
       </div>
     </header>

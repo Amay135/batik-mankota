@@ -57,7 +57,7 @@ cd backend
 pip install -r requirements/dev.txt
 cp .env.example .env
 python manage.py migrate
-python manage.py createsuperuser
+python manage.py buat_admin
 python manage.py runserver                 # http://localhost:8000
 celery -A config worker -l info            # worker
 celery -A config beat -l info              # jadwal (kadaluarsa reservasi)

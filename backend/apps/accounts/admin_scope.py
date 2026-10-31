@@ -51,8 +51,8 @@ ADMIN_CAPABILITIES = [
         "requires_2fa": True,
     },
     {
-        "id": "ADM-02",
-        "rujukan": "CLAUDE.md Role; ARSITEKTUR 8.1 poin 6",
+        "id": "SEC-01",
+        "rujukan": "CLAUDE.md Role; ARSITEKTUR 8.1 butir 6",
         "fase": 0,
         "method": "POST",
         "path": "/api/v1/auth/2fa/setup/",
@@ -60,8 +60,8 @@ ADMIN_CAPABILITIES = [
         "requires_2fa": False,
     },
     {
-        "id": "ADM-02",
-        "rujukan": "CLAUDE.md Role; ARSITEKTUR 8.1 poin 6",
+        "id": "SEC-01",
+        "rujukan": "CLAUDE.md Role; ARSITEKTUR 8.1 butir 6",
         "fase": 0,
         "method": "POST",
         "path": "/api/v1/auth/2fa/verify/",
