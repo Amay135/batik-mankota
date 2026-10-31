@@ -22,3 +22,10 @@ class AuditLogSerializer(serializers.ModelSerializer):
             "created_at",
         ]
         read_only_fields = fields
+
+
+class FilterAuditSerializer(serializers.Serializer):
+    dari = serializers.DateField(required=False)
+    sampai = serializers.DateField(required=False)
+    pelaku = serializers.CharField(required=False)
+    aksi = serializers.ChoiceField(choices=AuditLog.Action.choices, required=False)

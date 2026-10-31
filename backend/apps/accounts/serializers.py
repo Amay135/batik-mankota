@@ -109,6 +109,29 @@ class RegisterSerializer(serializers.Serializer):
         return User.objects.create_user(**data)
 
 
+class CsrfSerializer(serializers.Serializer):
+    csrf = serializers.CharField(read_only=True)
+
+
+class Setup2faSerializer(serializers.Serializer):
+    secret = serializers.CharField(read_only=True)
+    otpauth_uri = serializers.CharField(read_only=True)
+
+
+class HasilVerifikasi2faSerializer(serializers.Serializer):
+    otp_enabled = serializers.BooleanField(read_only=True)
+
+
+class GalatSerializer(serializers.Serializer):
+    code = serializers.CharField(read_only=True)
+    message = serializers.CharField(read_only=True)
+
+
+class GalatVerifikasiSerializer(serializers.Serializer):
+    # ValidationError per field: {"code": ["Kode 2FA salah ..."]}
+    code = serializers.ListField(child=serializers.CharField(), read_only=True)
+
+
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)

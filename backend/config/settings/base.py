@@ -124,6 +124,16 @@ REST_FRAMEWORK = {
 SPECTACULAR_SETTINGS = {
     "TITLE": "Batik Mankota API",
     "VERSION": "1.0.0",
+    # Nama enum stabil agar nama tipe hasil generate tidak berubah tiap regenerasi.
+    # Label harus sama dengan User.Role (model tidak bisa diimpor di settings).
+    "ENUM_NAME_OVERRIDES": {
+        "RoleEnum": [
+            ("admin", "Admin"),
+            ("kasir", "Kasir"),
+            ("user", "Pelanggan"),
+        ],
+        "StaffRoleEnum": [("admin", "admin"), ("kasir", "kasir")],
+    },
 }
 
 # Aturan bisnis marketplace

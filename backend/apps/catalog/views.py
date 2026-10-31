@@ -1,11 +1,17 @@
 from django.db.models import Count, Exists, Max, Min, OuterRef, Q
+from drf_spectacular.utils import extend_schema
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import Kategori, Produk, Varian
-from .serializers import KategoriSerializer, ProdukDetailSerializer, ProdukListSerializer
+from .serializers import (
+    DaftarKategoriSerializer,
+    KategoriSerializer,
+    ProdukDetailSerializer,
+    ProdukListSerializer,
+)
 
 URUTAN = {
     "populer": ("-terjual", "id"),
@@ -82,6 +88,7 @@ class ProdukListView(ListAPIView):
 
 
 class KategoriListView(APIView):
+    @extend_schema(responses=DaftarKategoriSerializer)
     def get(self, request):
         qs = Kategori.objects.annotate(jumlah=Count("produk", filter=Q(produk__aktif=True))).order_by("urutan", "id")
         data = KategoriSerializer(qs, many=True).data

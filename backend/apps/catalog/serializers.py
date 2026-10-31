@@ -30,6 +30,11 @@ class KategoriSerializer(serializers.ModelSerializer):
         fields = ["slug", "nama", "label_pendek", "jumlah"]
 
 
+class DaftarKategoriSerializer(serializers.Serializer):
+    total = serializers.IntegerField()
+    kategori = KategoriSerializer(many=True)
+
+
 class ProdukListSerializer(serializers.ModelSerializer):
     kategori = serializers.SerializerMethodField()
     teknik_label = serializers.CharField(read_only=True)
@@ -85,7 +90,8 @@ class ProdukDetailSerializer(ProdukListSerializer):
     terkait = serializers.SerializerMethodField()
 
     class Meta(ProdukListSerializer.Meta):
-        fields = ProdukListSerializer.Meta.fields + [
+        fields = [
+            *ProdukListSerializer.Meta.fields,
             "deskripsi", "bahan_detail", "perawatan", "koleksi", "perajin",
             "cerita_judul", "cerita_isi", "rating", "jumlah_ulasan", "terjual",
             "varian", "foto", "tersedia", "terkait",

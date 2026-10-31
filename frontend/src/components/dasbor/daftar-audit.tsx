@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { ApiError, api } from "@/lib/api";
-import { muatSemuaAudit } from "@/lib/audit";
 import type { BarisAudit, HalamanAudit } from "@/types/skema";
 
 import { Galat, Kosong, Memuat } from "./keadaan";
@@ -15,18 +14,11 @@ const LABEL_AKSI: Record<BarisAudit["action"], string> = {
   void_return: "Void/retur",
   role_change: "Ubah role",
   admin_login: "Login admin",
+  otp_reset: "Reset 2FA",
 };
 
+// Sama dengan AuditPagination.page_size di backend.
 const PER_HALAMAN = 50;
-
-function tanggalJakarta(iso: string) {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Jakarta",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date(iso));
-}
 
 function waktuJakarta(iso: string) {
   return new Date(iso).toLocaleString("id-ID", {
@@ -44,7 +36,7 @@ function rincian(nilai: unknown) {
 export function DaftarAudit() {
   const router = useRouter();
   const [baris, setBaris] = useState<BarisAudit[]>([]);
-  const [terpotong, setTerpotong] = useState(false);
+  const [total, setTotal] = useState(0);
   const [memuat, setMemuat] = useState(true);
   const [galat, setGalat] = useState("");
   const [tanggal, setTanggal] = useState("");
@@ -54,38 +46,46 @@ export function DaftarAudit() {
 
   useEffect(() => {
     let batal = false;
+    let sudahPindah = false;
     (async () => {
+      setMemuat(true);
+      setGalat("");
       try {
-        const hasil = await muatSemuaAudit((h) => api<HalamanAudit>(`/audit/?page=${h}`));
+        const q = new URLSearchParams({ page: String(halaman) });
+        if (tanggal) {
+          q.set("dari", tanggal);
+          q.set("sampai", tanggal);
+        }
+        if (pelaku) q.set("pelaku", pelaku);
+        if (aksi) q.set("aksi", aksi);
+        const data = await api<HalamanAudit>(`/audit/?${q}`);
         if (batal) return;
-        setBaris(hasil.baris);
-        setTerpotong(hasil.terpotong);
+        setBaris(data.results);
+        setTotal(data.count);
       } catch (err) {
         if (batal) return;
         if (err instanceof ApiError && err.status === 403) {
           router.replace("/verifikasi-2fa");
           return;
         }
+        // Halaman di luar jangkauan setelah filter menyempit: ulang dari halaman 1.
+        if (err instanceof ApiError && err.status === 404 && halaman > 1) {
+          sudahPindah = true;
+          setHalaman(1);
+          return;
+        }
         setGalat("Gagal memuat audit log.");
       } finally {
-        if (!batal) setMemuat(false);
+        if (!batal && !sudahPindah) setMemuat(false);
       }
     })();
     return () => {
       batal = true;
     };
-  }, [router]);
+  }, [router, halaman, tanggal, pelaku, aksi]);
 
-  const hasil = baris.filter(
-    (b) =>
-      (!tanggal || tanggalJakarta(b.created_at) === tanggal) &&
-      (!pelaku || b.actor_email.toLowerCase().includes(pelaku.toLowerCase())) &&
-      (!aksi || b.action === aksi),
-  );
-
-  const totalHalaman = Math.max(1, Math.ceil(hasil.length / PER_HALAMAN));
+  const totalHalaman = Math.max(1, Math.ceil(total / PER_HALAMAN));
   const halamanAman = Math.min(halaman, totalHalaman);
-  const tampil = hasil.slice((halamanAman - 1) * PER_HALAMAN, halamanAman * PER_HALAMAN);
 
   return (
     <div className="space-y-6">
@@ -144,16 +144,11 @@ export function DaftarAudit() {
 
       <section className="panel-dasbor" aria-labelledby="judul-audit">
         <h2 id="judul-audit" className="font-sans text-[13px] font-semibold">Audit log</h2>
-        {terpotong && (
-          <p role="status" className="mt-2 rounded-md border border-dash-star px-3 py-2 text-[11.5px]">
-            Data dipotong, persempit filter
-          </p>
-        )}
         {memuat ? (
           <Memuat />
         ) : galat ? (
           <Galat pesan={galat} />
-        ) : hasil.length === 0 ? (
+        ) : total === 0 ? (
           <Kosong pesan="Tidak ada audit log yang cocok dengan filter." />
         ) : (
           <>
@@ -170,7 +165,7 @@ export function DaftarAudit() {
                   </tr>
                 </thead>
                 <tbody>
-                  {tampil.map((b) => (
+                  {baris.map((b) => (
                     <tr key={b.id}>
                       <td className="whitespace-nowrap">{waktuJakarta(b.created_at)}</td>
                       <td>{b.actor_email}</td>
@@ -196,7 +191,7 @@ export function DaftarAudit() {
             </div>
             <div className="mt-3 flex items-center justify-between text-[11.5px] text-dash-text-muted">
               <span>
-                {hasil.length} baris · halaman {halamanAman} dari {totalHalaman}
+                {total} baris · halaman {halamanAman} dari {totalHalaman}
               </span>
               <div className="flex gap-2">
                 <button

@@ -7,27 +7,9 @@ export type BarisAudit = Skema["AuditLog"];
 export type HalamanAudit = Skema["PaginatedAuditLogList"];
 export type Role = Skema["RoleEnum"];
 
-// shortcut: view APIView akun/2FA tidak punya serializer_class sehingga bentuk
-// responsnya tidak ada di skema OpenAPI. Samakan dengan apps/accounts/serializers.py.
-export type Akun = {
-  id: number;
-  email: string;
-  nama_lengkap: string;
-  whatsapp: string;
-  role: Exclude<Role, "user">;
-  is_active: boolean;
-  otp_enabled: boolean;
-};
-
-export type AkunBaru = {
-  email: string;
-  password: string;
-  nama_lengkap: string;
-  whatsapp?: string;
-  role: Exclude<Role, "user">;
-};
-
-export type UbahAkun = Partial<Pick<Akun, "nama_lengkap" | "whatsapp" | "role" | "is_active">>;
-
-export type Setup2fa = { secret: string; otpauth_uri: string };
-export type HasilVerifikasi2fa = { otp_enabled: boolean };
+// Endpoint akun hanya mengembalikan staff; skema model memuat "user".
+export type Akun = Omit<Skema["AkunAdmin"], "role"> & { role: Exclude<Role, "user"> };
+export type AkunBaru = Skema["BuatAkun"];
+export type UbahAkun = Skema["PatchedUbahAkun"];
+export type Setup2fa = Skema["Setup2fa"];
+export type HasilVerifikasi2fa = Skema["HasilVerifikasi2fa"];

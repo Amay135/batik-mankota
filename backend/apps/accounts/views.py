@@ -1,7 +1,7 @@
 from django.contrib.auth import logout
 from django.middleware.csrf import get_token
 from django.shortcuts import get_object_or_404
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -14,10 +14,15 @@ from .permissions import IsAdmin, IsAdminBootstrap
 from .serializers import (
     AkunAdminSerializer,
     BuatAkunSerializer,
+    CsrfSerializer,
+    GalatSerializer,
+    GalatVerifikasiSerializer,
+    HasilVerifikasi2faSerializer,
     LoginSerializer,
     OtpVerifySerializer,
     RegisterSerializer,
     ResetPasswordSerializer,
+    Setup2faSerializer,
     UbahAkunSerializer,
     UserSerializer,
 )
@@ -30,6 +35,7 @@ class CsrfView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []
 
+    @extend_schema(responses=CsrfSerializer)
     def get(self, request):
         return Response({"csrf": get_token(request)})
 
@@ -40,6 +46,7 @@ class RegisterView(APIView):
     throttle_classes = [AuthRateThrottle]
     throttle_scope = "auth"
 
+    @extend_schema(request=RegisterSerializer, responses={201: UserSerializer})
     def post(self, request):
         s = RegisterSerializer(data=request.data)
         s.is_valid(raise_exception=True)
@@ -57,6 +64,7 @@ class LoginView(APIView):
     throttle_classes = [AuthRateThrottle]
     throttle_scope = "auth"
 
+    @extend_schema(request=LoginSerializer, responses=UserSerializer)
     def post(self, request):
         s = LoginSerializer(data=request.data, context={"request": request})
         s.is_valid(raise_exception=True)
@@ -66,6 +74,7 @@ class LoginView(APIView):
 
 
 class LogoutView(APIView):
+    @extend_schema(request=None, responses={204: None})
     def post(self, request):
         logout(request)
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -99,12 +108,14 @@ def _akun_admin(pk):
 class AkunListView(APIView):
     permission_classes = [IsAdmin]
 
+    @extend_schema(responses=AkunAdminSerializer(many=True))
     def get(self, request):
         qs = User.objects.filter(role__in=[User.Role.ADMIN, User.Role.KASIR]).order_by(
             "email"
         )
         return Response(AkunAdminSerializer(qs, many=True).data)
 
+    @extend_schema(request=BuatAkunSerializer, responses={201: AkunAdminSerializer})
     def post(self, request):
         s = BuatAkunSerializer(data=request.data)
         s.is_valid(raise_exception=True)
@@ -115,9 +126,11 @@ class AkunListView(APIView):
 class AkunDetailView(APIView):
     permission_classes = [IsAdmin]
 
+    @extend_schema(responses=AkunAdminSerializer)
     def get(self, request, pk):
         return Response(AkunAdminSerializer(_akun_staff(pk)).data)
 
+    @extend_schema(request=UbahAkunSerializer, responses=AkunAdminSerializer)
     def patch(self, request, pk):
         akun = _akun_staff(pk)
         s = UbahAkunSerializer(akun, data=request.data, partial=True)
@@ -133,6 +146,7 @@ class ResetPasswordView(APIView):
     throttle_classes = [AuthRateThrottle]
     throttle_scope = "auth"
 
+    @extend_schema(request=ResetPasswordSerializer, responses={204: None})
     def post(self, request, pk):
         akun = _akun_staff(pk)
         s = ResetPasswordSerializer(data=request.data, context={"user": akun})
@@ -144,6 +158,7 @@ class ResetPasswordView(APIView):
 class Reset2faView(APIView):
     permission_classes = [IsAdmin]
 
+    @extend_schema(request=None, responses={204: None})
     def post(self, request, pk):
         akun = _akun_admin(pk)
         services.reset_2fa(request.user, akun, ip=services.client_ip(request))
@@ -155,6 +170,14 @@ class OtpSetupView(APIView):
     throttle_classes = [ScopedRateThrottle, IpScopedRateThrottle]
     throttle_scope = "2fa"
 
+    @extend_schema(
+        request=None,
+        responses={
+            200: Setup2faSerializer,
+            409: GalatSerializer,
+            429: OpenApiResponse(description="Throttle: {detail}."),
+        },
+    )
     def post(self, request):
         secret = services.mulai_2fa(request.user)
         return Response(
@@ -170,6 +193,16 @@ class OtpVerifyView(APIView):
     throttle_classes = [ScopedRateThrottle, IpScopedRateThrottle]
     throttle_scope = "2fa"
 
+    @extend_schema(
+        request=OtpVerifySerializer,
+        responses={
+            200: HasilVerifikasi2faSerializer,
+            400: GalatVerifikasiSerializer,
+            429: OpenApiResponse(
+                description="TOTP_LOCKED: {code, message}; throttle: {detail}."
+            ),
+        },
+    )
     def post(self, request):
         s = OtpVerifySerializer(data=request.data, context={"user": request.user})
         s.is_valid(raise_exception=True)
