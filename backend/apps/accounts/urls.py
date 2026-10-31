@@ -11,6 +11,7 @@ urlpatterns = [
     path("akun/", views.AkunListView.as_view()),
     path("akun/<int:pk>/", views.AkunDetailView.as_view()),
     path("akun/<int:pk>/reset-password/", views.ResetPasswordView.as_view()),
+    path("akun/<int:pk>/reset-2fa/", views.Reset2faView.as_view()),
     path("2fa/setup/", views.OtpSetupView.as_view()),
     path("2fa/verify/", views.OtpVerifyView.as_view()),
 ]

@@ -51,6 +51,15 @@ ADMIN_CAPABILITIES = [
         "requires_2fa": True,
     },
     {
+        "id": "SEC-02",
+        "rujukan": "ARSITEKTUR 9; pemulihan perangkat TOTP hilang",
+        "fase": 0,
+        "method": "POST",
+        "path": "/api/v1/auth/akun/<int:pk>/reset-2fa/",
+        "roles": ("admin",),
+        "requires_2fa": True,
+    },
+    {
         "id": "SEC-01",
         "rujukan": "CLAUDE.md Role; ARSITEKTUR 8.1 butir 6",
         "fase": 0,

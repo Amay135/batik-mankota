@@ -3,8 +3,14 @@ from django.conf.urls.static import static
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView
 
+from apps.accounts.permissions import SchemaPermission
+
 urlpatterns = [
-    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+    path(
+        "api/schema/",
+        SpectacularAPIView.as_view(permission_classes=[SchemaPermission]),
+        name="schema",
+    ),
     path("api/v1/auth/", include("apps.accounts.urls")),
     path("api/v1/audit/", include("apps.audit.urls")),
     path("api/v1/katalog/", include("apps.catalog.urls")),

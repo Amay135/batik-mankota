@@ -21,7 +21,7 @@ from .serializers import (
     UbahAkunSerializer,
     UserSerializer,
 )
-from .throttling import IpScopedRateThrottle
+from .throttling import AuthRateThrottle, IpScopedRateThrottle
 
 
 class CsrfView(APIView):
@@ -37,7 +37,7 @@ class CsrfView(APIView):
 class RegisterView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [AuthRateThrottle]
     throttle_scope = "auth"
 
     def post(self, request):
@@ -54,7 +54,7 @@ class RegisterView(APIView):
 class LoginView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [AuthRateThrottle]
     throttle_scope = "auth"
 
     def post(self, request):
@@ -92,6 +92,10 @@ def _akun_staff(pk):
     return get_object_or_404(User, pk=pk, role__in=[User.Role.ADMIN, User.Role.KASIR])
 
 
+def _akun_admin(pk):
+    return get_object_or_404(User, pk=pk, role=User.Role.ADMIN)
+
+
 class AkunListView(APIView):
     permission_classes = [IsAdmin]
 
@@ -126,12 +130,23 @@ class AkunDetailView(APIView):
 
 class ResetPasswordView(APIView):
     permission_classes = [IsAdmin]
+    throttle_classes = [AuthRateThrottle]
+    throttle_scope = "auth"
 
     def post(self, request, pk):
         akun = _akun_staff(pk)
         s = ResetPasswordSerializer(data=request.data, context={"user": akun})
         s.is_valid(raise_exception=True)
         services.reset_password(akun, s.validated_data["password"])
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class Reset2faView(APIView):
+    permission_classes = [IsAdmin]
+
+    def post(self, request, pk):
+        akun = _akun_admin(pk)
+        services.reset_2fa(request.user, akun, ip=services.client_ip(request))
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

@@ -1,6 +1,8 @@
 import re
+import time
 
 import pytest
+from django.contrib.sessions.models import Session
 from django.core.cache import cache
 from django.urls import URLPattern, URLResolver, get_resolver
 from rest_framework.test import APIClient
@@ -8,7 +10,13 @@ from rest_framework.test import APIClient
 from apps.accounts import totp
 from apps.accounts.admin_scope import ADMIN_CAPABILITIES
 from apps.accounts.models import User
-from apps.accounts.permissions import IsAdmin, IsAdminBootstrap, IsKasirOrAdmin
+from apps.accounts.permissions import (
+    ADMIN_2FA_AT_SESSION_KEY,
+    ADMIN_2FA_SESSION_KEY,
+    IsAdmin,
+    IsAdminBootstrap,
+    IsKasirOrAdmin,
+)
 from apps.audit.models import AuditLog
 
 FASE_SAAT_INI = 0
@@ -478,3 +486,140 @@ def test_cost_price_hanya_untuk_admin():
 
 def test_django_admin_tidak_tersedia():
     assert APIClient().get("/admin/").status_code == 404
+
+
+def test_verifikasi_2fa_kedaluwarsa_setelah_12_jam(admin, monkeypatch):
+    client = _verified(admin)
+    assert client.get("/api/v1/audit/").status_code == 200
+
+    maju = time.time() + 13 * 60 * 60
+    monkeypatch.setattr("apps.accounts.permissions.time.time", lambda: maju)
+
+    assert client.get("/api/v1/audit/").status_code == 403
+    assert ADMIN_2FA_SESSION_KEY not in client.session
+
+
+def test_reset_2fa_oleh_admin_lain(admin, kasir):
+    admin2 = User.objects.create_user(
+        email="admin2@mankota.test",
+        password=PASSWORD,
+        nama_lengkap="Admin 2",
+        role=User.Role.ADMIN,
+        otp_enabled=True,
+        otp_secret=totp.generate_secret(),
+    )
+    target = _verified(admin2)
+    client = _verified(admin)
+
+    assert (
+        client.post(
+            f"/api/v1/auth/akun/{kasir.pk}/reset-2fa/", {}, format="json"
+        ).status_code
+        == 404
+    )
+
+    response = client.post(
+        f"/api/v1/auth/akun/{admin2.pk}/reset-2fa/", {}, format="json"
+    )
+    assert response.status_code == 204
+
+    admin2.refresh_from_db()
+    assert admin2.otp_enabled is False
+    assert admin2.otp_secret == ""
+
+    log = AuditLog.objects.get(action=AuditLog.Action.OTP_RESET)
+    assert log.actor == admin
+    assert log.entity_id == str(admin2.pk)
+    assert str(log.ip) == "127.0.0.1"
+    assert log.before == {"otp_enabled": True}
+    assert log.after == {"otp_enabled": False}
+
+    # Semua sesi target dicabut, jadi permintaan berikutnya menjadi tamu.
+    assert target.get("/api/v1/audit/").status_code == 401
+
+
+def test_admin_tidak_bisa_reset_2fa_sendiri(admin):
+    client = _verified(admin)
+    response = client.post(
+        f"/api/v1/auth/akun/{admin.pk}/reset-2fa/", {}, format="json"
+    )
+    assert response.status_code == 400
+
+    admin.refresh_from_db()
+    assert admin.otp_enabled is True
+    assert admin.otp_secret != ""
+
+
+def _jumlah_sesi(pk):
+    return sum(
+        1
+        for sesi in Session.objects.all()
+        if sesi.get_decoded().get("_auth_user_id") == str(pk)
+    )
+
+
+def test_reset_2fa_mencabut_semua_sesi_target(admin):
+    admin2 = User.objects.create_user(
+        email="admin2@mankota.test",
+        password=PASSWORD,
+        nama_lengkap="Admin 2",
+        role=User.Role.ADMIN,
+        otp_enabled=True,
+        otp_secret=totp.generate_secret(),
+    )
+    _verified(admin2)
+    _login(admin2)
+    assert _jumlah_sesi(admin2.pk) == 2
+
+    client = _verified(admin)
+    response = client.post(
+        f"/api/v1/auth/akun/{admin2.pk}/reset-2fa/", {}, format="json"
+    )
+    assert response.status_code == 204
+
+    assert _jumlah_sesi(admin2.pk) == 0
+    # Sesi admin pelaku tidak ikut dicabut.
+    assert client.get("/api/v1/audit/").status_code == 200
+
+
+def test_target_wajib_setup_ulang_2fa_setelah_reset(admin):
+    admin2 = User.objects.create_user(
+        email="admin2@mankota.test",
+        password=PASSWORD,
+        nama_lengkap="Admin 2",
+        role=User.Role.ADMIN,
+        otp_enabled=True,
+        otp_secret=totp.generate_secret(),
+    )
+    secret_lama = admin2.otp_secret
+    client = _verified(admin)
+    assert (
+        client.post(
+            f"/api/v1/auth/akun/{admin2.pk}/reset-2fa/", {}, format="json"
+        ).status_code
+        == 204
+    )
+
+    target = _login(admin2)
+    assert target.get("/api/v1/audit/").status_code == 403
+    assert (
+        target.post(
+            "/api/v1/auth/2fa/verify/",
+            {"code": totp.code_at(secret_lama)},
+            format="json",
+        ).status_code
+        == 400
+    )
+
+    setup = target.post("/api/v1/auth/2fa/setup/", {}, format="json")
+    assert setup.status_code == 200
+    assert setup.json()["secret"] != secret_lama
+    assert (
+        target.post(
+            "/api/v1/auth/2fa/verify/",
+            {"code": totp.code_at(setup.json()["secret"])},
+            format="json",
+        ).status_code
+        == 200
+    )
+    assert target.get("/api/v1/audit/").status_code == 200

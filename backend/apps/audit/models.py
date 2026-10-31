@@ -9,6 +9,7 @@ class AuditLog(models.Model):
         VOID_RETURN = "void_return", "Void/retur"
         ROLE_CHANGE = "role_change", "Ubah role"
         ADMIN_LOGIN = "admin_login", "Login admin"
+        OTP_RESET = "otp_reset", "Reset 2FA"
 
     actor = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="audit_log"
