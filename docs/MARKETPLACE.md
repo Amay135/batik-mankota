@@ -4,7 +4,7 @@ Cakupan: katalog online, detail produk, keranjang, checkout, riwayat pesanan. PO
 
 ## Autentikasi
 
-Sesi Django (cookie `sessionid`, httpOnly) + CSRF (`csrftoken`, header `X-CSRFToken`). Semua endpoint marketplace memakai `IsAuthenticated`; hanya `auth/csrf`, `auth/daftar`, `auth/masuk` yang terbuka. Percobaan masuk/daftar dibatasi 20 per menit.
+Sesi Django (cookie `sessionid`, httpOnly) + CSRF (`csrftoken`, header `X-CSRFToken`). Semua endpoint marketplace memakai `IsAuthenticated`; hanya `auth/csrf`, `auth/daftar`, `auth/masuk` yang terbuka. Percobaan masuk/daftar dibatasi 10 per menit.
 
 Gerbang di frontend ada dua lapis: `middleware.ts` (cek cookie) dan layout `(akun)` (validasi sesi ke API).
 
@@ -35,7 +35,7 @@ Gerbang di frontend ada dua lapis: `middleware.ts` (cek cookie) dan layout `(aku
 
 ## Gambar produk
 
-Model `FotoProduk.gambar` opsional. Jika kosong, frontend menggambar ilustrasi motif (`components/ui/seni-produk.tsx`). Unggah foto asli lewat Django admin dan ilustrasi otomatis diganti.
+Model `FotoProduk.gambar` opsional. Jika kosong, frontend menggambar ilustrasi motif (`components/ui/seni-produk.tsx`). Foto asli diunggah lewat API/dashboard admin (rencana `POST /api/v1/katalog/produk/<slug>/foto/`; Django admin tidak dipakai) dan ilustrasi otomatis diganti.
 
 ## Belum ada
 

@@ -12,7 +12,7 @@ Bahasa UI/produk: **Bahasa Indonesia**. Kode, nama variabel, commit: **bahasa In
 
 ## Stack
 
-- **Backend (`backend/`)**: Python 3.12 · Django 5 · Django REST Framework · drf-spectacular · simplejwt (cookie HttpOnly) · PostgreSQL 16 · Celery + Redis · pytest-django.
+- **Backend (`backend/`)**: Python 3.12 · Django 5 · Django REST Framework · drf-spectacular · auth sesi Django + CSRF · PostgreSQL 16 · Celery + Redis · pytest-django.
 - **Frontend (`frontend/`)**: Next.js 15 (App Router) · TypeScript · React 19 · Tailwind CSS · shadcn/ui · TanStack Query · React Hook Form + Zod · openapi-typescript · Vitest · Playwright.
 - **Infra**: Docker Compose · Nginx/Caddy · Cloudflare · GitHub Actions.
 
@@ -33,10 +33,10 @@ backend/
   apps/audit/          audit log
 frontend/src/
   app/(publik)/        landing, katalog, produk/[slug], q/[token]
-  app/(auth)/          login, daftar
-  app/(akun)/          akun, keranjang, checkout, pesanan   [user]
-  app/kasir/           POS                                   [kasir, admin]
-  app/dashboard/       inventory, procurement, keuangan, crm, laporan  [admin]
+  app/(auth)/          masuk, daftar, verifikasi-2fa
+  app/(akun)/          koleksi, produk/[slug], checkout, pesanan   [user]
+  app/kasir/           POS (belum dibangun)                          [kasir, admin]
+  app/dashboard/       akun, audit, stok, pengadaan, keuangan, laporan, pelanggan  [admin]
   components/ lib/ types/api.d.ts (DIGENERATE, jangan diedit)
 docs/                  PRD.md, ARSITEKTUR.md
 ```
@@ -86,6 +86,7 @@ npm run e2e            # Playwright (alur kasir & checkout)
 - Penegakan izin **di backend** (DRF permission class). Menyembunyikan menu di Next.js hanya untuk UX, bukan keamanan.
 - Default permission DRF = menolak; tiap view menyatakan izinnya secara eksplisit.
 - Akun `kasir`/`admin` hanya dibuat admin. Registrasi publik selalu menghasilkan `user`. Admin wajib 2FA (TOTP).
+- Akun `admin` pertama dibuat dengan `python manage.py buat_admin`. Django admin tidak dipasang (melewati 2FA); kelola akun, foto produk, dan data master lewat API/dashboard.
 - Kasir tidak boleh melihat `cost_price`, keuangan, atau laporan laba.
 - Tiap endpoint punya test izin untuk setiap role (matriks `docs/PRD.md` bagian 2).
 
@@ -116,11 +117,12 @@ npm run e2e            # Playwright (alur kasir & checkout)
 - Backend memakai serializer bertingkat: `PublicProductCard` (tamu) dan `FullProductDetail` (login).
 - Tamu: foto, nama, kisaran harga, kategori, motif. User login: + semua varian, bahan, panduan ukuran, ulasan, **status stok** (Tersedia / Tinggal sedikit / Habis). Angka stok persis hanya admin/kasir. Harga beli tidak pernah keluar ke user/tamu.
 - Data terlarang **tidak dikirim** ke tamu (bukan hanya disembunyikan CSS/JS).
-- Tombol "Lihat detail lengkap" → `/login?next=...`.
+- Tombol "Lihat detail lengkap" → `/masuk?next=...`.
 
 ## Kontrak API (backend ↔ frontend)
 
 - Basis: `/api/v1/`. Skema OpenAPI dibuat `drf-spectacular`; setiap serializer/view diberi tipe yang jelas.
+- Nama route berbahasa Indonesia: sumber daya huruf kecil, tanda hubung bila perlu, tanpa jamak, garis miring di akhir. Contoh: `auth/masuk/`, `katalog/produk/`, `kasir/transaksi/`. Prefiks `auth/` dan `audit/` dipertahankan; prefix modul: `stok/`, `kasir/`, `pengadaan/`, `keuangan/`, `laporan/`, `pelanggan/`, `pembayaran/`.
 - Setiap perubahan API → jalankan `npm run gen:api` di `frontend/` dan commit `types/api.d.ts`. CI gagal jika tidak sinkron.
 - Jangan menulis tipe respons API manual di frontend; pakai tipe hasil generate.
 - Format error: `{"code": "...", "message": "...", "details": {...}}`; frontend menampilkan `message`, logika memakai `code`.
@@ -128,8 +130,10 @@ npm run e2e            # Playwright (alur kasir & checkout)
 
 ## Auth & Keamanan
 
-- Token **tidak** boleh di `localStorage`/`sessionStorage`. Cookie `HttpOnly; Secure; SameSite=Lax` (domain `.mankota.id`). Access 15 menit, refresh dirotasi + blacklist.
-- Cookie → **CSRF wajib** untuk metode non-GET; frontend kirim `X-CSRFToken`. Fetch dari browser memakai `credentials: "include"`.
+- Auth = **sesi Django**, bukan JWT. Cookie `sessionid` `HttpOnly; Secure; SameSite=Lax` (domain `.mankota.id` lewat `COOKIE_DOMAIN`). Tidak ada access/refresh token; token **tidak** boleh di `localStorage`/`sessionStorage`.
+- **CSRF wajib** untuk metode non-GET: `GET /api/v1/auth/csrf/` memasang cookie `csrftoken`, frontend mengirim header `X-CSRFToken`. Fetch dari browser memakai `credentials: "include"`. `CSRF_TRUSTED_ORIGINS` dibaca dari env; produksi wajib mengisi origin https.
+- 2FA admin memakai TOTP sendiri (`backend/apps/accounts/totp.py`): 6 digit, langkah 30 detik. Verifikasi terikat sesi dan **diulang setiap login**; batas 12 jam. Jangan memakai `django-otp`/`django-axes`.
+- Throttle DRF (cache) 10/menit untuk login, daftar, reset password; 5/menit untuk 2FA; lockout 5 kode salah → kunci 15 menit. Redis **wajib** di produksi agar efektif lintas worker.
 - CORS: hanya origin frontend dengan credentials; jangan `*`.
 - Server Components meneruskan cookie ke API lewat `cookies()`; halaman terautentikasi `cache: "no-store"`.
 - `NEXT_PUBLIC_*` terlihat publik: **jangan isi rahasia**. Rahasia hanya di backend/`.env`.
@@ -138,7 +142,6 @@ npm run e2e            # Playwright (alur kasir & checkout)
 - Upload foto: whitelist tipe & ukuran, proses ulang dengan Pillow.
 - Jangan log password, token, atau data kartu. Jangan commit `.env`, kunci API, data pelanggan asli.
 - Tindakan sensitif (ubah harga, penyesuaian stok, void/retur, ubah role) → `audit_log`.
-- Rate limit (DRF throttling + Redis) untuk login, daftar, checkout.
 
 ## QR Code
 

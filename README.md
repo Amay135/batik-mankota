@@ -47,6 +47,7 @@ scripts/  skrip bantu
    pip install -r requirements/dev.txt
    cp .env.example .env
    python manage.py migrate
+   python manage.py buat_admin       # buat akun admin pertama
    python manage.py runserver
    ```
 
