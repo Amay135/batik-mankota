@@ -5,9 +5,14 @@ import { useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 
 import { ApiError, api, pesanGalat } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import type { HasilVerifikasi2fa, Setup2fa } from "@/types/skema";
 
-import { Galat } from "./keadaan";
+import { ErrorState } from "./keadaan";
+
+const LABEL_KOLOM = "mb-1.5 block text-[11px] text-dash-text-muted";
 
 export function Verifikasi2fa({ sudahTerdaftar }: { sudahTerdaftar: boolean }) {
   const router = useRouter();
@@ -75,9 +80,9 @@ export function Verifikasi2fa({ sudahTerdaftar }: { sudahTerdaftar: boolean }) {
           <p className="text-[12px] text-dash-text-muted">
             Pasang aplikasi autentikator (mis. Google Authenticator), lalu mulai setup untuk mendapat kode QR.
           </p>
-          <button type="button" className="tombol-utama" onClick={mulai} disabled={proses}>
+          <Button type="button" onClick={mulai} disabled={proses}>
             {proses ? "Menyiapkan..." : "Mulai setup 2FA"}
-          </button>
+          </Button>
         </>
       )}
 
@@ -92,10 +97,10 @@ export function Verifikasi2fa({ sudahTerdaftar }: { sudahTerdaftar: boolean }) {
       )}
 
       <form onSubmit={verifikasi} className="space-y-3">
-        <label className="block">
-          <span className="label-dasbor">Kode 6 digit</span>
-          <input
-            className="input-dasbor"
+        <div>
+          <Label htmlFor="kode-2fa" className={LABEL_KOLOM}>Kode 6 digit</Label>
+          <Input
+            id="kode-2fa"
             inputMode="numeric"
             autoComplete="one-time-code"
             maxLength={6}
@@ -103,11 +108,11 @@ export function Verifikasi2fa({ sudahTerdaftar }: { sudahTerdaftar: boolean }) {
             onChange={(e) => setKode(e.target.value.replace(/\D/g, ""))}
             required
           />
-        </label>
-        {pesan && <Galat pesan={pesan} />}
-        <button type="submit" className="tombol-utama w-full" disabled={proses || kode.length !== 6}>
+        </div>
+        {pesan && <ErrorState pesan={pesan} />}
+        <Button type="submit" className="w-full" disabled={proses || kode.length !== 6}>
           {proses ? "Memverifikasi..." : "Verifikasi"}
-        </button>
+        </Button>
       </form>
     </section>
   );

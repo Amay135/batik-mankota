@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import animate from "tailwindcss-animate";
 
 const config: Config = {
   content: ["./src/**/*.{ts,tsx}"],
@@ -21,6 +22,20 @@ const config: Config = {
           star: "var(--dash-star, #C9962B)",
           overlay: "var(--dash-overlay, rgb(43 29 22 / 0.45))",
         },
+        // Variabel shadcn. Fallback hex = token DESIGN.md agar komponen ber-portal
+        // (Dialog/Select/Toast di luar [data-area="dashboard"]) tetap terbaca.
+        border: "var(--border, #DCCDB6)",
+        input: "var(--input, #DCCDB6)",
+        ring: "var(--ring, #7B1E2B)",
+        background: "var(--background, #FFFFFF)",
+        foreground: "var(--foreground, #2B1D16)",
+        primary: { DEFAULT: "var(--primary, #7B1E2B)", foreground: "var(--primary-foreground, #FFFFFF)" },
+        secondary: { DEFAULT: "var(--secondary, #EBDFCB)", foreground: "var(--secondary-foreground, #2B1D16)" },
+        destructive: { DEFAULT: "var(--destructive, #7B1E2B)", foreground: "var(--destructive-foreground, #FFFFFF)" },
+        muted: { DEFAULT: "var(--muted, #EBDFCB)", foreground: "var(--muted-foreground, #6E5E52)" },
+        accent: { DEFAULT: "var(--accent, #EBDFCB)", foreground: "var(--accent-foreground, #2B1D16)" },
+        popover: { DEFAULT: "var(--popover, #FFFFFF)", foreground: "var(--popover-foreground, #2B1D16)" },
+        card: { DEFAULT: "var(--card, #FFFFFF)", foreground: "var(--card-foreground, #2B1D16)" },
       },
       fontFamily: {
         serif: ['"Cormorant Garamond"', "Georgia", "serif"],
@@ -28,6 +43,6 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [animate],
 };
 export default config;
