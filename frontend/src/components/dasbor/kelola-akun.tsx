@@ -4,10 +4,14 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { ApiError, api, galatPerField, pesanGalat } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Akun, AkunBaru, Role } from "@/types/skema";
 
 import { DialogKonfirmasi } from "./dialog-konfirmasi";
-import { Galat, Kosong, Memuat } from "./keadaan";
+import { EmptyState, ErrorState, Memuat } from "./keadaan";
 
 type Dialog =
   | { jenis: "ubah"; akun: Akun }
@@ -17,6 +21,7 @@ type Dialog =
 
 const AKUN_BARU: AkunBaru = { email: "", password: "", nama_lengkap: "", whatsapp: "", role: "kasir" };
 const LABEL_ROLE: Record<Exclude<Role, "user">, string> = { admin: "Admin", kasir: "Kasir" };
+const LABEL_KOLOM = "mb-1.5 block text-[11px] text-dash-text-muted";
 
 export function KelolaAkun() {
   const router = useRouter();
@@ -107,17 +112,19 @@ export function KelolaAkun() {
     jenis === "sandi" ? "Reset" : jenis === "status" ? (dialog?.akun.is_active ? "Nonaktifkan" : "Aktifkan") : "Simpan";
 
   const kolom = (kunci: keyof AkunBaru, label: string, tipe = "text") => (
-    <label className="block">
-      <span className="label-dasbor">{label}</span>
-      <input
-        className="input-dasbor"
+    <div className="block">
+      <Label htmlFor={`akun-baru-${kunci}`} className={LABEL_KOLOM}>
+        {label}
+      </Label>
+      <Input
+        id={`akun-baru-${kunci}`}
         type={tipe}
         value={baru[kunci] ?? ""}
         onChange={(e) => setBaru((s) => ({ ...s, [kunci]: e.target.value }))}
         required={kunci !== "whatsapp"}
       />
       {galatBaru[kunci] && <span role="alert" className="galat-dasbor">{galatBaru[kunci]}</span>}
-    </label>
+    </div>
   );
 
   return (
@@ -136,9 +143,10 @@ export function KelolaAkun() {
           {kolom("email", "Email", "email")}
           {kolom("password", "Kata sandi", "password")}
           {kolom("whatsapp", "Nomor WhatsApp (opsional)", "tel")}
-          <label className="block">
-            <span className="label-dasbor">Role</span>
+          <div className="block">
+            <Label htmlFor="akun-baru-role" className={LABEL_KOLOM}>Role</Label>
             <select
+              id="akun-baru-role"
               className="input-dasbor"
               value={baru.role}
               onChange={(e) => setBaru((s) => ({ ...s, role: e.target.value as Exclude<Role, "user"> }))}
@@ -146,12 +154,12 @@ export function KelolaAkun() {
               <option value="kasir">Kasir</option>
               <option value="admin">Admin</option>
             </select>
-          </label>
+          </div>
           <div className="flex items-center gap-3 sm:col-span-2">
-            <button type="submit" className="tombol-utama" disabled={proses}>
+            <Button type="submit" disabled={proses}>
               {proses ? "Menyimpan..." : "Tambah akun"}
-            </button>
-            {umumBaru && <Galat pesan={umumBaru} />}
+            </Button>
+            {umumBaru && <ErrorState pesan={umumBaru} />}
           </div>
         </form>
       </section>
@@ -159,49 +167,57 @@ export function KelolaAkun() {
       <section className="panel-dasbor" aria-labelledby="judul-daftar">
         <h2 id="judul-daftar" className="font-sans text-[13px] font-semibold">Daftar akun</h2>
         {daftar === null ? (
-          galatMuat ? <Galat pesan={galatMuat} /> : <Memuat />
+          galatMuat ? <ErrorState pesan={galatMuat} /> : <Memuat />
         ) : daftar.length === 0 ? (
-          <Kosong pesan="Belum ada akun kasir atau admin." />
+          <EmptyState pesan="Belum ada akun kasir atau admin." />
         ) : (
-          <div className="mt-3 overflow-x-auto">
-            <table className="tabel-dasbor">
-              <thead>
-                <tr>
-                  <th>Email</th>
-                  <th>Nama</th>
-                  <th>Role</th>
-                  <th>Status</th>
-                  <th>2FA</th>
-                  <th className="text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
+          <div className="mt-3">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead>Email</TableHead>
+                  <TableHead>Nama</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>2FA</TableHead>
+                  <TableHead className="text-right">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {daftar.map((a) => (
-                  <tr key={a.id}>
-                    <td>{a.email}</td>
-                    <td>
+                  <TableRow key={a.id}>
+                    <TableCell>{a.email}</TableCell>
+                    <TableCell>
                       {a.nama_lengkap || "—"}
                       {a.whatsapp && <span className="block text-[10.5px] text-dash-text-muted">{a.whatsapp}</span>}
-                    </td>
-                    <td>{LABEL_ROLE[a.role]}</td>
-                    <td>
+                    </TableCell>
+                    <TableCell>{LABEL_ROLE[a.role]}</TableCell>
+                    <TableCell>
                       <span className={`lencana ${a.is_active ? "lencana-utama" : "lencana-redup"}`}>
                         {a.is_active ? "Aktif" : "Nonaktif"}
                       </span>
-                    </td>
-                    <td>
+                    </TableCell>
+                    <TableCell>
                       <span className={`lencana ${a.otp_enabled ? "lencana-utama" : "lencana-redup"}`}>
                         {a.otp_enabled ? "Aktif" : "Belum"}
                       </span>
-                    </td>
-                    <td>
+                    </TableCell>
+                    <TableCell>
                       <div className="flex justify-end gap-2">
-                        <button type="button" className="tombol-sekunder h-8 px-2.5 text-[11.5px]" onClick={() => bukaUbah(a)}>
-                          Ubah
-                        </button>
-                        <button
+                        <Button
                           type="button"
-                          className="tombol-sekunder h-8 px-2.5 text-[11.5px]"
+                          variant="outline"
+                          size="sm"
+                          className="h-8 px-2.5 text-[11.5px]"
+                          onClick={() => bukaUbah(a)}
+                        >
+                          Ubah
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-8 px-2.5 text-[11.5px]"
                           onClick={() => {
                             setSandi("");
                             setGalatDialog("");
@@ -209,23 +225,25 @@ export function KelolaAkun() {
                           }}
                         >
                           Reset sandi
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
-                          className="tombol-sekunder h-8 px-2.5 text-[11.5px]"
+                          variant="outline"
+                          size="sm"
+                          className="h-8 px-2.5 text-[11.5px]"
                           onClick={() => {
                             setGalatDialog("");
                             setDialog({ jenis: "status", akun: a });
                           }}
                         >
                           {a.is_active ? "Nonaktifkan" : "Aktifkan"}
-                        </button>
+                        </Button>
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         )}
       </section>
@@ -240,26 +258,27 @@ export function KelolaAkun() {
       >
         {jenis === "ubah" && (
           <div className="space-y-3">
-            <label className="block">
-              <span className="label-dasbor">Nama lengkap</span>
-              <input
-                className="input-dasbor"
+            <div>
+              <Label htmlFor="dialog-ubah-nama" className={LABEL_KOLOM}>Nama lengkap</Label>
+              <Input
+                id="dialog-ubah-nama"
                 value={ubahData.nama_lengkap}
                 onChange={(e) => setUbahData((s) => ({ ...s, nama_lengkap: e.target.value }))}
                 required
               />
-            </label>
-            <label className="block">
-              <span className="label-dasbor">Nomor WhatsApp</span>
-              <input
-                className="input-dasbor"
+            </div>
+            <div>
+              <Label htmlFor="dialog-ubah-wa" className={LABEL_KOLOM}>Nomor WhatsApp</Label>
+              <Input
+                id="dialog-ubah-wa"
                 value={ubahData.whatsapp}
                 onChange={(e) => setUbahData((s) => ({ ...s, whatsapp: e.target.value }))}
               />
-            </label>
-            <label className="block">
-              <span className="label-dasbor">Role</span>
+            </div>
+            <div>
+              <Label htmlFor="dialog-ubah-role" className={LABEL_KOLOM}>Role</Label>
               <select
+                id="dialog-ubah-role"
                 className="input-dasbor"
                 value={ubahData.role}
                 onChange={(e) => setUbahData((s) => ({ ...s, role: e.target.value as Exclude<Role, "user"> }))}
@@ -267,21 +286,27 @@ export function KelolaAkun() {
                 <option value="kasir">Kasir</option>
                 <option value="admin">Admin</option>
               </select>
-            </label>
+            </div>
           </div>
         )}
         {jenis === "sandi" && (
-          <label className="block">
-            <span className="label-dasbor">Kata sandi baru</span>
-            <input className="input-dasbor" type="password" value={sandi} onChange={(e) => setSandi(e.target.value)} required />
-          </label>
+          <div>
+            <Label htmlFor="dialog-sandi" className={LABEL_KOLOM}>Kata sandi baru</Label>
+            <Input
+              id="dialog-sandi"
+              type="password"
+              value={sandi}
+              onChange={(e) => setSandi(e.target.value)}
+              required
+            />
+          </div>
         )}
         {jenis === "status" && (
           <p>
             Akun <b>{dialog?.akun.email}</b> akan {dialog?.akun.is_active ? "dinonaktifkan" : "diaktifkan"}.
           </p>
         )}
-        {galatDialog && <Galat pesan={galatDialog} />}
+        {galatDialog && <ErrorState pesan={galatDialog} />}
       </DialogKonfirmasi>
     </div>
   );

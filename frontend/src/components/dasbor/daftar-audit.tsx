@@ -2,11 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import type { ColumnDef } from "@tanstack/react-table";
 
 import { ApiError, api } from "@/lib/api";
+import { waktuJakarta } from "@/lib/format";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import type { BarisAudit, HalamanAudit } from "@/types/skema";
 
-import { Galat, Kosong, Memuat } from "./keadaan";
+import { DataTable } from "./data-table";
+import { EmptyState, ErrorState, Memuat } from "./keadaan";
 
 const LABEL_AKSI: Record<BarisAudit["action"], string> = {
   price_change: "Ubah harga",
@@ -20,18 +25,52 @@ const LABEL_AKSI: Record<BarisAudit["action"], string> = {
 // Sama dengan AuditPagination.page_size di backend.
 const PER_HALAMAN = 50;
 
-function waktuJakarta(iso: string) {
-  return new Date(iso).toLocaleString("id-ID", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: "Asia/Jakarta",
-  });
-}
+const LABEL_KOLOM = "mb-1.5 block text-[11px] text-dash-text-muted";
 
 function rincian(nilai: unknown) {
   if (nilai === null || nilai === undefined || (typeof nilai === "object" && Object.keys(nilai).length === 0)) return "—";
   return JSON.stringify(nilai);
 }
+
+const KOLOM: ColumnDef<BarisAudit, unknown>[] = [
+  {
+    id: "waktu",
+    header: "Waktu (WIB)",
+    cell: ({ row }) => <span className="whitespace-nowrap">{waktuJakarta(row.original.created_at)}</span>,
+  },
+  { id: "pelaku", header: "Pelaku", cell: ({ row }) => row.original.actor_email },
+  {
+    id: "aksi",
+    header: "Aksi",
+    cell: ({ row }) => LABEL_AKSI[row.original.action] ?? row.original.action,
+  },
+  {
+    id: "entitas",
+    header: "Entitas",
+    cell: ({ row }) => (
+      <>
+        {row.original.entity || "—"}
+        {row.original.entity_id && (
+          <span className="block text-[10.5px] text-dash-text-muted">#{row.original.entity_id}</span>
+        )}
+      </>
+    ),
+  },
+  { id: "ip", header: "IP", cell: ({ row }) => row.original.ip ?? "—" },
+  {
+    id: "rincian",
+    header: "Rincian",
+    cell: ({ row }) => (
+      <details>
+        <summary className="cursor-pointer">Lihat</summary>
+        <pre className="mt-1 max-w-[280px] whitespace-pre-wrap break-all text-[10.5px] text-dash-text-muted">
+          Sebelum: {rincian(row.original.before)}
+          {"\n"}Sesudah: {rincian(row.original.after)}
+        </pre>
+      </details>
+    ),
+  },
+];
 
 export function DaftarAudit() {
   const router = useRouter();
@@ -84,9 +123,6 @@ export function DaftarAudit() {
     };
   }, [router, halaman, tanggal, pelaku, aksi]);
 
-  const totalHalaman = Math.max(1, Math.ceil(total / PER_HALAMAN));
-  const halamanAman = Math.min(halaman, totalHalaman);
-
   return (
     <div className="space-y-6">
       <header>
@@ -98,10 +134,10 @@ export function DaftarAudit() {
 
       <section className="panel-dasbor" aria-label="Filter log audit">
         <div className="grid gap-3 sm:grid-cols-3">
-          <label className="block">
-            <span className="label-dasbor">Tanggal (WIB)</span>
-            <input
-              className="input-dasbor"
+          <div className="block">
+            <Label htmlFor="filter-tanggal" className={LABEL_KOLOM}>Tanggal (WIB)</Label>
+            <Input
+              id="filter-tanggal"
               type="date"
               value={tanggal}
               onChange={(e) => {
@@ -109,11 +145,11 @@ export function DaftarAudit() {
                 setHalaman(1);
               }}
             />
-          </label>
-          <label className="block">
-            <span className="label-dasbor">Pelaku</span>
-            <input
-              className="input-dasbor"
+          </div>
+          <div className="block">
+            <Label htmlFor="filter-pelaku" className={LABEL_KOLOM}>Pelaku</Label>
+            <Input
+              id="filter-pelaku"
               type="search"
               placeholder="Email pelaku"
               value={pelaku}
@@ -122,10 +158,11 @@ export function DaftarAudit() {
                 setHalaman(1);
               }}
             />
-          </label>
-          <label className="block">
-            <span className="label-dasbor">Aksi</span>
+          </div>
+          <div className="block">
+            <Label htmlFor="filter-aksi" className={LABEL_KOLOM}>Aksi</Label>
             <select
+              id="filter-aksi"
               className="input-dasbor"
               value={aksi}
               onChange={(e) => {
@@ -138,7 +175,7 @@ export function DaftarAudit() {
                 <option key={nilai} value={nilai}>{label}</option>
               ))}
             </select>
-          </label>
+          </div>
         </div>
       </section>
 
@@ -147,72 +184,21 @@ export function DaftarAudit() {
         {memuat ? (
           <Memuat />
         ) : galat ? (
-          <Galat pesan={galat} />
+          <ErrorState pesan={galat} />
         ) : total === 0 ? (
-          <Kosong pesan="Tidak ada audit log yang cocok dengan filter." />
+          <EmptyState pesan="Tidak ada audit log yang cocok dengan filter." />
         ) : (
-          <>
-            <div className="mt-3 overflow-x-auto">
-              <table className="tabel-dasbor">
-                <thead>
-                  <tr>
-                    <th>Waktu (WIB)</th>
-                    <th>Pelaku</th>
-                    <th>Aksi</th>
-                    <th>Entitas</th>
-                    <th>IP</th>
-                    <th>Rincian</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {baris.map((b) => (
-                    <tr key={b.id}>
-                      <td className="whitespace-nowrap">{waktuJakarta(b.created_at)}</td>
-                      <td>{b.actor_email}</td>
-                      <td>{LABEL_AKSI[b.action] ?? b.action}</td>
-                      <td>
-                        {b.entity || "—"}
-                        {b.entity_id && <span className="block text-[10.5px] text-dash-text-muted">#{b.entity_id}</span>}
-                      </td>
-                      <td>{b.ip ?? "—"}</td>
-                      <td>
-                        <details>
-                          <summary className="cursor-pointer">Lihat</summary>
-                          <pre className="mt-1 max-w-[280px] whitespace-pre-wrap break-all text-[10.5px] text-dash-text-muted">
-                            Sebelum: {rincian(b.before)}
-                            {"\n"}Sesudah: {rincian(b.after)}
-                          </pre>
-                        </details>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="mt-3 flex items-center justify-between text-[11.5px] text-dash-text-muted">
-              <span>
-                {total} baris · halaman {halamanAman} dari {totalHalaman}
-              </span>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  className="tombol-sekunder h-8 px-3 text-[11.5px]"
-                  onClick={() => setHalaman((h) => Math.max(1, h - 1))}
-                  disabled={halamanAman === 1}
-                >
-                  Sebelumnya
-                </button>
-                <button
-                  type="button"
-                  className="tombol-sekunder h-8 px-3 text-[11.5px]"
-                  onClick={() => setHalaman((h) => Math.min(totalHalaman, h + 1))}
-                  disabled={halamanAman === totalHalaman}
-                >
-                  Berikutnya
-                </button>
-              </div>
-            </div>
-          </>
+          <div className="mt-3">
+            <DataTable
+              kolom={KOLOM}
+              data={baris}
+              total={total}
+              halaman={halaman}
+              perHalaman={PER_HALAMAN}
+              onHalaman={setHalaman}
+              kosong="Tidak ada audit log yang cocok dengan filter."
+            />
+          </div>
         )}
       </section>
     </div>

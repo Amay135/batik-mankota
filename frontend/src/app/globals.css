@@ -62,6 +62,29 @@ input[type="range"].rentang::-moz-range-thumb {
   --dash-border: #DCCDB6;
   --dash-star: #C9962B;
   --dash-overlay: rgb(43 29 22 / 0.45);
+
+  /* Variabel shadcn dipetakan ke token --dash-* (docs/DESIGN.md §2).
+     --background memakai surface: shadcn memakainya untuk latar input/dialog/tombol. */
+  --background: var(--dash-surface);
+  --foreground: var(--dash-text);
+  --card: var(--dash-surface);
+  --card-foreground: var(--dash-text);
+  --popover: var(--dash-surface);
+  --popover-foreground: var(--dash-text);
+  --primary: var(--dash-primary);
+  --primary-foreground: var(--dash-on-primary);
+  --secondary: var(--dash-bg-alt);
+  --secondary-foreground: var(--dash-text);
+  --muted: var(--dash-bg-alt);
+  --muted-foreground: var(--dash-text-muted);
+  --accent: var(--dash-bg-alt);
+  --accent-foreground: var(--dash-text);
+  --destructive: var(--dash-primary);
+  --destructive-foreground: var(--dash-on-primary);
+  --border: var(--dash-border);
+  --input: var(--dash-border);
+  --ring: var(--dash-primary);
+  --radius: 0.5rem;
 }
 
 @layer components {
