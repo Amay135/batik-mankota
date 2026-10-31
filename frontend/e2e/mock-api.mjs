@@ -238,13 +238,25 @@ const server = createServer(async (req, res) => {
 
   if (path === "/api/v1/audit" && method === "GET") {
     if (!butuhAdmin(req, res)) return;
+    const tanggalJakarta = (iso) =>
+      new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta" }).format(new Date(iso));
+    const dari = url.searchParams.get("dari");
+    const sampai = url.searchParams.get("sampai");
+    const pelaku = url.searchParams.get("pelaku");
+    const aksi = url.searchParams.get("aksi");
+    let baris = state.audit;
+    if (dari) baris = baris.filter((b) => tanggalJakarta(b.created_at) >= dari);
+    if (sampai) baris = baris.filter((b) => tanggalJakarta(b.created_at) <= sampai);
+    if (pelaku) baris = baris.filter((b) => b.actor_email.toLowerCase().includes(pelaku.toLowerCase()));
+    if (aksi) baris = baris.filter((b) => b.action === aksi);
+
     const halaman = Math.max(1, Number(url.searchParams.get("page") ?? "1"));
     const ukuran = 50;
     const mulai = (halaman - 1) * ukuran;
-    const potong = state.audit.slice(mulai, mulai + ukuran);
+    const potong = baris.slice(mulai, mulai + ukuran);
     kirim(res, 200, {
-      count: state.audit.length,
-      next: mulai + ukuran < state.audit.length ? `/api/v1/audit/?page=${halaman + 1}` : null,
+      count: baris.length,
+      next: mulai + ukuran < baris.length ? `/api/v1/audit/?page=${halaman + 1}` : null,
       previous: halaman > 1 ? `/api/v1/audit/?page=${halaman - 1}` : null,
       results: potong,
     });

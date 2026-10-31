@@ -150,7 +150,8 @@ class Command(BaseCommand):
             )
             produk.varian.all().delete()
             produk.foto.all().delete()
-            warna_list = [warna] + [w for w in WARNA if w != warna][: (2 if idx % 3 == 0 else 1)]
+            lain = [w for w in WARNA if w != warna][: (2 if idx % 3 == 0 else 1)]
+            warna_list = [warna, *lain]
             for w in warna_list:
                 for u in (["S", "M", "L", "XL", "XXL"] if punya_ukuran else ["ALL"]):
                     stok = rng.choice([0, 3, 8, 12, 20, 30])

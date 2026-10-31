@@ -1,4 +1,5 @@
 from django.db import transaction
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import RetrieveAPIView
@@ -10,7 +11,15 @@ from apps.catalog.models import Varian
 
 from . import services
 from .models import ItemKeranjang, Pesanan, Voucher
-from .serializers import BuatPesananSerializer, ItemKeranjangSerializer, PesananSerializer
+from .serializers import (
+    BuatPesananSerializer,
+    ItemKeranjangSerializer,
+    KodeVoucherSerializer,
+    KeranjangSerializer,
+    PesananSerializer,
+    TambahItemSerializer,
+    UbahJumlahSerializer,
+)
 
 
 def respons_keranjang(request):
@@ -26,6 +35,7 @@ def respons_keranjang(request):
 class KeranjangView(APIView):
     permission_classes = [IsUser]
 
+    @extend_schema(responses=KeranjangSerializer)
     def get(self, request):
         return respons_keranjang(request)
 
@@ -33,6 +43,7 @@ class KeranjangView(APIView):
 class TambahItemView(APIView):
     permission_classes = [IsUser]
 
+    @extend_schema(request=TambahItemSerializer, responses=KeranjangSerializer)
     @transaction.atomic
     def post(self, request):
         try:
@@ -62,6 +73,7 @@ class ItemView(APIView):
         except ItemKeranjang.DoesNotExist:
             raise ValidationError({"detail": "Item tidak ditemukan."})
 
+    @extend_schema(request=UbahJumlahSerializer, responses=KeranjangSerializer)
     def patch(self, request, pk):
         item = self._item(request, pk)
         try:
@@ -76,6 +88,7 @@ class ItemView(APIView):
         item.save(update_fields=["jumlah"])
         return respons_keranjang(request)
 
+    @extend_schema(request=None, responses=KeranjangSerializer)
     def delete(self, request, pk):
         self._item(request, pk).delete()
         return respons_keranjang(request)
@@ -84,6 +97,7 @@ class ItemView(APIView):
 class VoucherView(APIView):
     permission_classes = [IsUser]
 
+    @extend_schema(request=KodeVoucherSerializer, responses=KeranjangSerializer)
     def post(self, request):
         kode = str(request.data.get("kode", "")).strip().upper()
         try:
@@ -99,6 +113,7 @@ class VoucherView(APIView):
         k.save(update_fields=["voucher"])
         return respons_keranjang(request)
 
+    @extend_schema(request=None, responses=KeranjangSerializer)
     def delete(self, request):
         k = services.keranjang_user(request.user)
         k.voucher = None
@@ -109,10 +124,12 @@ class VoucherView(APIView):
 class PesananListCreateView(APIView):
     permission_classes = [IsUser]
 
+    @extend_schema(responses=PesananSerializer(many=True))
     def get(self, request):
         qs = Pesanan.objects.filter(user=request.user).prefetch_related("item")
         return Response(PesananSerializer(qs, many=True).data)
 
+    @extend_schema(request=BuatPesananSerializer, responses={201: PesananSerializer})
     def post(self, request):
         s = BuatPesananSerializer(data=request.data)
         s.is_valid(raise_exception=True)

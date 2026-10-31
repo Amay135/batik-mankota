@@ -40,6 +40,37 @@ class ItemKeranjangSerializer(serializers.ModelSerializer):
         return o.varian.produk.harga * o.jumlah
 
 
+class RingkasanSerializer(serializers.Serializer):
+    jumlah_produk = serializers.IntegerField()
+    jumlah_barang = serializers.IntegerField()
+    subtotal = serializers.IntegerField()
+    ongkir = serializers.IntegerField()
+    promo_ongkir = serializers.IntegerField()
+    diskon_voucher = serializers.IntegerField()
+    kode_voucher = serializers.CharField()
+    voucher_galat = serializers.CharField(allow_null=True)
+    total = serializers.IntegerField()
+    gratis_ongkir_min = serializers.IntegerField()
+
+
+class KeranjangSerializer(serializers.Serializer):
+    item = ItemKeranjangSerializer(many=True)
+    ringkasan = RingkasanSerializer()
+
+
+class TambahItemSerializer(serializers.Serializer):
+    varian_id = serializers.IntegerField()
+    jumlah = serializers.IntegerField(default=1)
+
+
+class UbahJumlahSerializer(serializers.Serializer):
+    jumlah = serializers.IntegerField()
+
+
+class KodeVoucherSerializer(serializers.Serializer):
+    kode = serializers.CharField()
+
+
 class ItemPesananSerializer(serializers.ModelSerializer):
     subtotal = serializers.IntegerField(read_only=True)
 

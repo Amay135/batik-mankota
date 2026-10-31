@@ -81,7 +81,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["v1_auth_akun_retrieve"];
+        get: operations["v1_auth_akun_list"];
         put?: never;
         post: operations["v1_auth_akun_create"];
         delete?: never;
@@ -97,13 +97,29 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["v1_auth_akun_retrieve_2"];
+        get: operations["v1_auth_akun_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
         patch: operations["v1_auth_akun_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/auth/akun/{id}/reset-2fa/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_auth_akun_reset_2fa_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/auth/akun/{id}/reset-password/": {
@@ -322,7 +338,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["v1_pesanan_retrieve"];
+        get: operations["v1_pesanan_list"];
         put?: never;
         post: operations["v1_pesanan_create"];
         delete?: never;
@@ -338,7 +354,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["v1_pesanan_retrieve_2"];
+        get: operations["v1_pesanan_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -357,9 +373,24 @@ export interface components {
          *     * `void_return` - Void/retur
          *     * `role_change` - Ubah role
          *     * `admin_login` - Login admin
+         *     * `otp_reset` - Reset 2FA
          * @enum {string}
          */
-        ActionEnum: "price_change" | "stock_adjust" | "void_return" | "role_change" | "admin_login";
+        ActionEnum: "price_change" | "stock_adjust" | "void_return" | "role_change" | "admin_login" | "otp_reset";
+        AkunAdmin: {
+            readonly id: number;
+            /** Format: email */
+            readonly email: string;
+            readonly nama_lengkap: string;
+            readonly whatsapp: string;
+            readonly role: components["schemas"]["RoleEnum"];
+            /**
+             * Aktif
+             * @description Menentukan apakah pengguna dianggap aktif. Hapus pilihan ini tanpa perlu menghapus akunnya.
+             */
+            readonly is_active: boolean;
+            readonly otp_enabled: boolean;
+        };
         AuditLog: {
             readonly id: number;
             readonly actor_id: number;
@@ -374,9 +405,66 @@ export interface components {
             /** Format: date-time */
             readonly created_at: string;
         };
+        /**
+         * @description * `bca` - bca
+         *     * `bni` - bni
+         *     * `mandiri` - mandiri
+         *     * `bri` - bri
+         * @enum {string}
+         */
+        BankEnum: "bca" | "bni" | "mandiri" | "bri";
+        /** @enum {unknown} */
+        BlankEnum: "";
+        BuatAkun: {
+            /** Format: email */
+            email: string;
+            password: string;
+            nama_lengkap: string;
+            whatsapp?: string;
+            role: components["schemas"]["StaffRoleEnum"];
+        };
+        BuatPesanan: {
+            nama_lengkap: string;
+            whatsapp: string;
+            /** Format: email */
+            email: string;
+            alamat: string;
+            provinsi: string;
+            kota: string;
+            kecamatan: string;
+            kode_pos: string;
+            metode_bayar: components["schemas"]["MetodeBayarEnum"];
+            bank?: components["schemas"]["BankEnum"] | components["schemas"]["BlankEnum"];
+        };
+        Csrf: {
+            readonly csrf: string;
+        };
+        DaftarKategori: {
+            total: number;
+            kategori: components["schemas"]["Kategori"][];
+        };
         Foto: {
             jenis?: components["schemas"]["JenisEnum"];
             readonly url: string;
+        };
+        Galat: {
+            readonly code: string;
+            readonly message: string;
+        };
+        GalatVerifikasi: {
+            readonly code: string[];
+        };
+        HasilVerifikasi2fa: {
+            readonly otp_enabled: boolean;
+        };
+        ItemKeranjang: {
+            readonly id: number;
+            /** Format: int64 */
+            jumlah?: number;
+            readonly varian: string;
+            readonly produk: string;
+            readonly harga: string;
+            readonly subtotal: string;
         };
         ItemPesanan: {
             nama: string;
@@ -400,6 +488,25 @@ export interface components {
          * @enum {string}
          */
         JenisEnum: "depan" | "detail" | "belakang" | "model";
+        Kategori: {
+            slug: string;
+            nama: string;
+            /** @description Dipakai di kartu produk, mis. Pria */
+            label_pendek: string;
+            readonly jumlah: number;
+        };
+        Keranjang: {
+            item: components["schemas"]["ItemKeranjang"][];
+            ringkasan: components["schemas"]["Ringkasan"];
+        };
+        KodeVoucher: {
+            kode: string;
+        };
+        Login: {
+            /** Format: email */
+            email: string;
+            password: string;
+        };
         /**
          * @description * `transfer_bank` - Transfer Bank
          *     * `qris` - QRIS
@@ -407,6 +514,9 @@ export interface components {
          * @enum {string}
          */
         MetodeBayarEnum: "transfer_bank" | "qris" | "dompet_digital";
+        OtpVerify: {
+            code: string;
+        };
         PaginatedAuditLogList: {
             /** @example 123 */
             count: number;
@@ -436,6 +546,19 @@ export interface components {
              */
             previous?: string | null;
             results: components["schemas"]["ProdukList"][];
+        };
+        PatchedUbahAkun: {
+            nama_lengkap?: string;
+            whatsapp?: string;
+            role?: components["schemas"]["StaffRoleEnum"];
+            /**
+             * Aktif
+             * @description Menentukan apakah pengguna dianggap aktif. Hapus pilihan ini tanpa perlu menghapus akunnya.
+             */
+            is_active?: boolean;
+        };
+        PatchedUbahJumlah: {
+            jumlah?: number;
         };
         PatchedUser: {
             readonly id?: number;
@@ -543,6 +666,28 @@ export interface components {
             warna_utama: components["schemas"]["WarnaUtamaEnum"];
             readonly foto_utama: string;
         };
+        Register: {
+            /** Format: email */
+            email: string;
+            password: string;
+            nama_lengkap: string;
+            whatsapp?: string;
+        };
+        ResetPassword: {
+            password: string;
+        };
+        Ringkasan: {
+            jumlah_produk: number;
+            jumlah_barang: number;
+            subtotal: number;
+            ongkir: number;
+            promo_ongkir: number;
+            diskon_voucher: number;
+            kode_voucher: string;
+            voucher_galat: string | null;
+            total: number;
+            gratis_ongkir_min: number;
+        };
         /**
          * @description * `admin` - Admin
          *     * `kasir` - Kasir
@@ -550,6 +695,16 @@ export interface components {
          * @enum {string}
          */
         RoleEnum: "admin" | "kasir" | "user";
+        Setup2fa: {
+            readonly secret: string;
+            readonly otpauth_uri: string;
+        };
+        /**
+         * @description * `admin` - admin
+         *     * `kasir` - kasir
+         * @enum {string}
+         */
+        StaffRoleEnum: "admin" | "kasir";
         /**
          * @description * `menunggu_pembayaran` - Menunggu pembayaran
          *     * `dibayar` - Sudah dibayar
@@ -560,6 +715,11 @@ export interface components {
          * @enum {string}
          */
         StatusEnum: "menunggu_pembayaran" | "dibayar" | "diproses" | "dikirim" | "selesai" | "dibatalkan";
+        TambahItem: {
+            varian_id: number;
+            /** @default 1 */
+            jumlah: number;
+        };
         /**
          * @description * `tulis` - Batik Tulis
          *     * `cap` - Batik Cap
@@ -657,8 +817,20 @@ export interface operations {
     v1_audit_list: {
         parameters: {
             query?: {
+                /**
+                 * @description * `price_change` - Ubah harga
+                 *     * `stock_adjust` - Penyesuaian stok
+                 *     * `void_return` - Void/retur
+                 *     * `role_change` - Ubah role
+                 *     * `admin_login` - Login admin
+                 *     * `otp_reset` - Reset 2FA
+                 */
+                aksi?: "price_change" | "stock_adjust" | "void_return" | "role_change" | "admin_login" | "otp_reset";
+                dari?: string;
                 /** @description A page number within the paginated result set. */
                 page?: number;
+                pelaku?: string;
+                sampai?: string;
             };
             header?: never;
             path?: never;
@@ -685,8 +857,24 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description No response body */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Setup2fa"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Galat"];
+                };
+            };
+            /** @description Throttle: {detail}. */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -701,10 +889,32 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OtpVerify"];
+                "application/x-www-form-urlencoded": components["schemas"]["OtpVerify"];
+                "multipart/form-data": components["schemas"]["OtpVerify"];
+            };
+        };
         responses: {
-            /** @description No response body */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HasilVerifikasi2fa"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GalatVerifikasi"];
+                };
+            };
+            /** @description TOTP_LOCKED: {code, message}; throttle: {detail}. */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -712,7 +922,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_akun_retrieve: {
+    v1_auth_akun_list: {
         parameters: {
             query?: never;
             header?: never;
@@ -721,12 +931,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description No response body */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["AkunAdmin"][];
+                };
             };
         };
     };
@@ -737,18 +948,25 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BuatAkun"];
+                "application/x-www-form-urlencoded": components["schemas"]["BuatAkun"];
+                "multipart/form-data": components["schemas"]["BuatAkun"];
+            };
+        };
         responses: {
-            /** @description No response body */
-            200: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["AkunAdmin"];
+                };
             };
         };
     };
-    v1_auth_akun_retrieve_2: {
+    v1_auth_akun_retrieve: {
         parameters: {
             query?: never;
             header?: never;
@@ -759,12 +977,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description No response body */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["AkunAdmin"];
+                };
             };
         };
     };
@@ -777,10 +996,37 @@ export interface operations {
             };
             cookie?: never;
         };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedUbahAkun"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedUbahAkun"];
+                "multipart/form-data": components["schemas"]["PatchedUbahAkun"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AkunAdmin"];
+                };
+            };
+        };
+    };
+    v1_auth_akun_reset_2fa_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
         requestBody?: never;
         responses: {
             /** @description No response body */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -797,10 +1043,16 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResetPassword"];
+                "application/x-www-form-urlencoded": components["schemas"]["ResetPassword"];
+                "multipart/form-data": components["schemas"]["ResetPassword"];
+            };
+        };
         responses: {
             /** @description No response body */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -817,12 +1069,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description No response body */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Csrf"];
+                };
             };
         };
     };
@@ -833,14 +1086,21 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Register"];
+                "application/x-www-form-urlencoded": components["schemas"]["Register"];
+                "multipart/form-data": components["schemas"]["Register"];
+            };
+        };
         responses: {
-            /** @description No response body */
-            200: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
             };
         };
     };
@@ -854,7 +1114,7 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description No response body */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -869,14 +1129,21 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Login"];
+                "application/x-www-form-urlencoded": components["schemas"]["Login"];
+                "multipart/form-data": components["schemas"]["Login"];
+            };
+        };
         responses: {
-            /** @description No response body */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
             };
         };
     };
@@ -933,12 +1200,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description No response body */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["DaftarKategori"];
+                };
             };
         };
     };
@@ -996,12 +1264,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description No response body */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Keranjang"];
+                };
             };
         };
     };
@@ -1012,14 +1281,21 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TambahItem"];
+                "application/x-www-form-urlencoded": components["schemas"]["TambahItem"];
+                "multipart/form-data": components["schemas"]["TambahItem"];
+            };
+        };
         responses: {
-            /** @description No response body */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Keranjang"];
+                };
             };
         };
     };
@@ -1052,14 +1328,21 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedUbahJumlah"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedUbahJumlah"];
+                "multipart/form-data": components["schemas"]["PatchedUbahJumlah"];
+            };
+        };
         responses: {
-            /** @description No response body */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Keranjang"];
+                };
             };
         };
     };
@@ -1070,14 +1353,21 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KodeVoucher"];
+                "application/x-www-form-urlencoded": components["schemas"]["KodeVoucher"];
+                "multipart/form-data": components["schemas"]["KodeVoucher"];
+            };
+        };
         responses: {
-            /** @description No response body */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Keranjang"];
+                };
             };
         };
     };
@@ -1099,7 +1389,7 @@ export interface operations {
             };
         };
     };
-    v1_pesanan_retrieve: {
+    v1_pesanan_list: {
         parameters: {
             query?: never;
             header?: never;
@@ -1108,12 +1398,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description No response body */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Pesanan"][];
+                };
             };
         };
     };
@@ -1124,18 +1415,25 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BuatPesanan"];
+                "application/x-www-form-urlencoded": components["schemas"]["BuatPesanan"];
+                "multipart/form-data": components["schemas"]["BuatPesanan"];
+            };
+        };
         responses: {
-            /** @description No response body */
-            200: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Pesanan"];
+                };
             };
         };
     };
-    v1_pesanan_retrieve_2: {
+    v1_pesanan_retrieve: {
         parameters: {
             query?: never;
             header?: never;
