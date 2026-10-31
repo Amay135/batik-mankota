@@ -251,6 +251,58 @@ const server = createServer(async (req, res) => {
     return;
   }
 
+  const produkDetail = path.match(/^\/api\/v1\/katalog\/produk\/([\w-]+)$/);
+  if (produkDetail && method === "GET") {
+    kirim(res, 200, {
+      id: 1,
+      slug: produkDetail[1],
+      nama: "Batik Demo",
+      kategori: { slug: "tulis", nama: "Batik Tulis", label_pendek: "Tulis" },
+      teknik: "tulis",
+      teknik_label: "Batik Tulis",
+      label: "Baru",
+      harga: 350000,
+      unggulan: true,
+      motif: "parang",
+      bentuk: "kain",
+      warna_utama: "soga",
+      foto_utama: null,
+      deskripsi: "Batik demo untuk pengujian.",
+      bahan_detail: "Katun primisima.",
+      perawatan: "Cuci tangan dengan sabun lembut.",
+      koleksi: "Sogan Klasik",
+      perajin: "Bu Siti",
+      cerita_judul: "Cerita demo",
+      cerita_isi: "Cerita singkat untuk pengujian.",
+      rating: "4.8",
+      jumlah_ulasan: 12,
+      terjual: 30,
+      varian: [{ id: 1, warna: "soga", ukuran: "L", sku: "DEMO-L", stok: 5 }],
+      foto: [{ jenis: "depan", url: null }],
+      tersedia: true,
+      terkait: [],
+    });
+    return;
+  }
+
+  if (path === "/api/v1/katalog/produk" && method === "GET") {
+    kirim(res, 200, { jumlah: 0, halaman: 1, per_halaman: 6, total_halaman: 1, dari: 0, sampai: 0, hasil: [], meta: { total_produk: 0, total_perajin: 0, harga_min: 0, harga_maks: 0 } });
+    return;
+  }
+
+  if (path === "/api/v1/katalog/kategori" && method === "GET") {
+    kirim(res, 200, { total: 0, kategori: [] });
+    return;
+  }
+
+  if (path === "/api/v1/keranjang" && method === "GET") {
+    kirim(res, 200, {
+      item: [],
+      ringkasan: { jumlah_produk: 0, jumlah_barang: 0, subtotal: 0, ongkir: 0, promo_ongkir: 0, diskon_voucher: 0, kode_voucher: "", voucher_galat: null, total: 0, gratis_ongkir_min: 0 },
+    });
+    return;
+  }
+
   kirim(res, 404, { detail: `Tidak ada rute mock: ${method} ${path}` });
 });
 

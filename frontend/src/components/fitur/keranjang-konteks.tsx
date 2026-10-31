@@ -26,19 +26,29 @@ export function useKeranjang() {
   return v;
 }
 
-export function KeranjangProvider({ children }: { children: React.ReactNode }) {
+export function KeranjangProvider({
+  children,
+  role,
+}: {
+  children: React.ReactNode;
+  role: "admin" | "kasir" | "user";
+}) {
+  // Hanya pelanggan yang punya keranjang; endpoint /keranjang/ menolak role lain.
+  const bolehMuat = role === "user";
   const [keranjang, setKeranjang] = useState<Keranjang | null>(null);
-  const [muat, setMuat] = useState(true);
+  const [muat, setMuat] = useState(bolehMuat);
 
   const segarkan = useCallback(async () => {
     try {
       setKeranjang(await api<Keranjang>("/keranjang/"));
+    } catch {
+      // Kegagalan muat keranjang cukup dibiarkan kosong; jangan jadi unhandled rejection.
     } finally {
       setMuat(false);
     }
   }, []);
 
-  useEffect(() => { void segarkan(); }, [segarkan]);
+  useEffect(() => { if (bolehMuat) void segarkan(); }, [bolehMuat, segarkan]);
 
   const simpan = useCallback(async (p: Promise<Keranjang>) => {
     const k = await p;

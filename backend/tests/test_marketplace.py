@@ -1,7 +1,9 @@
 import pytest
 from rest_framework.test import APIClient
 
+from apps.accounts.models import User
 from apps.catalog.models import Varian
+from apps.catalog.serializers import status_stok
 
 ALAMAT = {
     "nama_lengkap": "Rina Wulandari", "whatsapp": "0812 8690 1234", "email": "rina@email.com",
@@ -52,13 +54,33 @@ def test_filter(client_login):
 def test_detail(client_login):
     d = client_login.get("/api/v1/katalog/produk/kemeja-parang-indigo/").json()
     assert d["harga"] == 365000 and len(d["terkait"]) == 4 and d["tersedia"]
-    assert any(v["sku"] == "KM-001-ID-L" and v["stok"] == 24 for v in d["varian"])
+    v = next(v for v in d["varian"] if v["sku"] == "KM-001-ID-L")
+    assert "stok" not in v and v["status_stok"] == "Tersedia"
+
+
+def test_stok_angka_hanya_admin_dan_kasir(seeded):
+    for role in ("admin", "kasir"):
+        u = User.objects.create_user(
+            email=f"{role}@mankota.test", password="rahasia-kuat-1", nama_lengkap=role, role=role
+        )
+        c = APIClient()
+        assert c.login(username=u.email, password="rahasia-kuat-1")
+        d = c.get("/api/v1/katalog/produk/kemeja-parang-indigo/").json()
+        v = next(v for v in d["varian"] if v["sku"] == "KM-001-ID-L")
+        assert v["stok"] == 24 and "status_stok" not in v
+
+
+def test_ambang_status_stok():
+    assert [status_stok(n) for n in (0, 1, 5, 6)] == [
+        "Habis", "Tinggal sedikit", "Tinggal sedikit", "Tersedia",
+    ]
 
 
 def test_keranjang_demo_sama_dengan_desain(client_login):
     r = client_login.get("/api/v1/keranjang/").json()
     assert r["ringkasan"]["subtotal"] == 790000 and r["ringkasan"]["promo_ongkir"] == 25000
     assert r["ringkasan"]["jumlah_produk"] == 2
+    assert all("stok" not in item["varian"] for item in r["item"])
 
 
 def test_checkout_mengurangi_stok_dan_kosongkan_keranjang(client_login):
@@ -85,6 +107,8 @@ def test_tidak_bisa_melebihi_stok(client_login):
     v = Varian.objects.get(sku="KM-001-ID-L")
     r = client_login.post("/api/v1/keranjang/item/", {"varian_id": v.id, "jumlah": 999}, format="json")
     assert r.status_code == 400
+    # PRD F-LP-05/5.10: user hanya melihat status, bukan angka stok — termasuk di teks galat.
+    assert str(v.stok) not in r.content.decode()
 
 
 def test_voucher(client_login):

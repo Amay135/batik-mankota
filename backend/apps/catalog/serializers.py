@@ -2,6 +2,19 @@ from rest_framework import serializers
 
 from .models import FotoProduk, Kategori, Produk, Varian
 
+AMBANG_STOK_SEDIKIT = 5
+
+
+def status_stok(stok):
+    if stok < 1:
+        return "Habis"
+    return "Tinggal sedikit" if stok <= AMBANG_STOK_SEDIKIT else "Tersedia"
+
+
+def boleh_stok_angka(request):
+    """PRD 5.10: angka stok persis hanya untuk admin dan kasir."""
+    return bool(request and getattr(request.user, "role", None) in ("admin", "kasir"))
+
 
 def url_foto(foto, request):
     if foto and foto.gambar:
@@ -39,9 +52,19 @@ class ProdukListSerializer(serializers.ModelSerializer):
 
 
 class VarianSerializer(serializers.ModelSerializer):
+    status_stok = serializers.SerializerMethodField()
+
     class Meta:
         model = Varian
-        fields = ["id", "warna", "ukuran", "sku", "stok"]
+        fields = ["id", "warna", "ukuran", "sku", "stok", "status_stok"]
+
+    def get_status_stok(self, obj):
+        return status_stok(obj.stok)
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data.pop("status_stok" if boleh_stok_angka(self.context.get("request")) else "stok")
+        return data
 
 
 class FotoSerializer(serializers.ModelSerializer):

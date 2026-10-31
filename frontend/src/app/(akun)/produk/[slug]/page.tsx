@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 
 import { DetailProduk } from "@/components/fitur/detail-produk";
 import { KartuProduk } from "@/components/fitur/kartu-produk";
-import { apiServer } from "@/lib/api-server";
+import { apiServer, penggunaSaatIni } from "@/lib/api-server";
 import type { ProdukDetail } from "@/types/katalog";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -17,7 +17,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function HalamanProduk({ params }: Props) {
   const { slug } = await params;
-  const p = await apiServer<ProdukDetail | null>(`/katalog/produk/${slug}/`);
+  const [p, pengguna] = await Promise.all([
+    apiServer<ProdukDetail | null>(`/katalog/produk/${slug}/`),
+    penggunaSaatIni(),
+  ]);
   if (!p) notFound();
 
   return (
@@ -30,7 +33,7 @@ export default async function HalamanProduk({ params }: Props) {
           <span className="mx-1.5">/</span>
           <span>{p.nama}</span>
         </nav>
-        <DetailProduk key={p.slug} p={p} />
+        <DetailProduk key={p.slug} p={p} role={pengguna?.role ?? "user"} />
       </div>
 
       <section className="bg-white py-12">

@@ -46,7 +46,7 @@ class TambahItemView(APIView):
         k = services.keranjang_user(request.user)
         item, _ = ItemKeranjang.objects.get_or_create(keranjang=k, varian=varian, defaults={"jumlah": 0})
         if item.jumlah + jumlah > varian.stok:
-            raise ValidationError({"detail": f"Stok tersisa {varian.stok} pcs untuk varian ini."})
+            raise ValidationError({"detail": "Stok habis." if varian.stok < 1 else "Jumlah melebihi stok yang tersedia."})
         item.jumlah += jumlah
         item.save(update_fields=["jumlah"])
         return respons_keranjang(request)
@@ -71,7 +71,7 @@ class ItemView(APIView):
         if jumlah < 1:
             raise ValidationError({"detail": "Jumlah minimal 1."})
         if jumlah > item.varian.stok:
-            raise ValidationError({"detail": f"Stok tersisa {item.varian.stok} pcs untuk varian ini."})
+            raise ValidationError({"detail": "Stok habis." if item.varian.stok < 1 else "Jumlah melebihi stok yang tersedia."})
         item.jumlah = jumlah
         item.save(update_fields=["jumlah"])
         return respons_keranjang(request)

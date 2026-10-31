@@ -63,7 +63,7 @@ test("admin tanpa TOTP diarahkan ke setup", async ({ page }) => {
   await expect(page.locator('svg[aria-label="Kode QR setup 2FA"]')).toBeVisible();
   await expect(page.getByText("JBSWY3DPEHPK3PXP")).toBeVisible();
 
-  await page.screenshot({ path: "e2e/screenshots/adm-02.png", fullPage: true });
+  await page.screenshot({ path: "e2e/screenshots/sec-01.png", fullPage: true });
 });
 
 test("kode terkunci menampilkan pesan Indonesia", async ({ page }) => {
@@ -111,4 +111,19 @@ test("tombol keluar kembali ke halaman masuk", async ({ page }) => {
   await masukAdmin(page);
   await page.getByRole("button", { name: "Keluar" }).click();
   await page.waitForURL("**/masuk");
+});
+
+
+test("admin tidak melihat tautan keranjang", async ({ page }) => {
+  await masukAdmin(page);
+  await page.goto("/koleksi");
+  await expect(page.getByRole("link", { name: /^Keranjang,/ })).toHaveCount(0);
+});
+
+test("admin tidak melihat tombol beli di halaman produk", async ({ page }) => {
+  await masukAdmin(page);
+  await page.goto("/produk/demo");
+  await expect(page.getByRole("heading", { name: "Batik Demo" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Beli Sekarang" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Tambah ke Keranjang" })).toHaveCount(0);
 });
