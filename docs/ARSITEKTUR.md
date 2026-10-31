@@ -21,13 +21,13 @@ Versi: 1.1 (rencana B: backend dan frontend terpisah) · Pendamping `docs/PRD.md
 
 | Lapisan | Pilihan | Alasan |
 |---|---|---|
-| Bahasa & framework | **Python 3.12 + Django 5** | ORM, auth, migrasi, admin bawaan |
+| Bahasa & framework | **Python 3.12 + Django 5** | ORM, auth, migrasi, sesi |
 | API | **Django REST Framework (DRF)** | Serializer, permission, throttling, pagination |
 | Dokumentasi API | **drf-spectacular** (OpenAPI 3) | Skema dipakai frontend untuk generate tipe TypeScript |
-| Auth | `djangorestframework-simplejwt` + cookie `HttpOnly` (kelas auth kustom) | Aman dari pencurian token lewat XSS |
+| Auth | **Sesi Django + CSRF** (cookie `sessionid` HttpOnly) | Tanpa token di JavaScript; aman dari pencurian token lewat XSS |
 | Hash password | Argon2 (`argon2-cffi`) | Kuat terhadap brute force |
-| Anti brute force | `django-axes` | Kunci akun/IP setelah gagal berulang |
-| 2FA admin | `django-otp` (TOTP) | Lindungi akun paling berkuasa |
+| Anti brute force | Throttle DRF + lockout berbasis cache (Redis) | Batasi percobaan login/2FA per IP dan kunci akun setelah gagal berulang |
+| 2FA admin | TOTP sendiri (`apps/accounts/totp.py`) | Lindungi akun paling berkuasa tanpa dependensi tambahan |
 | CORS | `django-cors-headers` | Hanya origin frontend |
 | Database | **PostgreSQL 16** | Transaksi, `SELECT … FOR UPDATE`, constraint |
 | Tugas latar | **Celery + Redis** | Kadaluarsa reservasi, email, laporan, revalidasi cache frontend |
@@ -111,7 +111,7 @@ mankota/
 ├── backend/                      # Backend Django
 │   ├── config/                   # settings (base/dev/prod), urls, celery
 │   ├── apps/
-│   │   ├── accounts/             # User kustom, role, auth cookie, 2FA
+│   │   ├── accounts/             # User kustom, role, auth sesi, 2FA
 │   │   ├── catalog/              # Product, Variant (SKU, QR token), kategori, motif
 │   │   ├── inventory/            # Stock, StockMovement, reservasi, opname  ← INTI STOK
 │   │   ├── pos/                  # shift, pembayaran offline, struk
@@ -126,11 +126,11 @@ mankota/
 ├── frontend/                     # Frontend Next.js
 │   ├── src/
 │   │   ├── app/
-│   │   │   ├── (publik)/         # landing, katalog, produk/[slug], q/[token]
-│   │   │   ├── (auth)/           # login, daftar, lupa password
-│   │   │   ├── (akun)/           # akun, keranjang, checkout, pesanan  [user]
-│   │   │   ├── kasir/            # POS                                  [kasir, admin]
-│   │   │   └── dashboard/        # inventory, procurement, keuangan, crm, laporan, pengaturan [admin]
+│   │   │   ├── (publik)/         # landing, katalog ringkas, q/[token]
+│   │   │   ├── (auth)/           # masuk, daftar, verifikasi-2fa
+│   │   │   ├── (akun)/           # koleksi, produk/[slug], checkout, pesanan  [user]
+│   │   │   ├── kasir/            # POS (belum dibangun)                       [kasir, admin]
+│   │   │   └── dashboard/        # akun, audit, stok, pengadaan, keuangan, laporan, pelanggan [admin]
 │   │   ├── components/ (ui/ dari shadcn, fitur/)
 │   │   ├── lib/ (API client, auth helper, format Rupiah)
 │   │   └── types/api.d.ts        # DIGENERATE dari OpenAPI, jangan diedit manual
@@ -209,9 +209,9 @@ sequenceDiagram
     participant DB as PostgreSQL
     participant W as Web (Next.js)
 
-    K->>A: GET /pos/variants/by-token/{token}/ (hasil scan QR)
+    K->>A: GET /kasir/varian/{qr_token}/ (hasil scan QR)
     A-->>K: data varian (nama, harga, stok)
-    K->>A: POST /pos/checkout/ (Idempotency-Key)
+    K->>A: POST /kasir/transaksi/ (Idempotency-Key)
     A->>DB: BEGIN
     A->>I: consume_stock(items, ref=order)
     I->>DB: SELECT stock ... FOR UPDATE
@@ -247,7 +247,7 @@ Setelah COMMIT, API katalog langsung menghitung `qty_on_hand − qty_reserved` d
 - Next.js:
   - Daftar katalog dan kartu publik: Server Component dengan `fetch(..., { next: { revalidate: 60, tags: ["catalog"] } })` (ISR, bagus untuk SEO).
   - Detail lengkap dan status stok untuk user: `cache: "no-store"` dengan meneruskan cookie sesi ke API.
-  - Tombol "Lihat detail lengkap" → `/login?next=<url>`; setelah login kembali ke produk.
+  - Tombol "Lihat detail lengkap" → `/masuk?next=<url>`; setelah login kembali ke produk.
   - `middleware.ts` hanya mengarahkan UX (cek cookie ada); **penegakan sebenarnya di API**.
 - Revalidasi sesuai kejadian: saat produk/stok berubah, task Celery memanggil route handler `/api/revalidate` di frontend (POST, header rahasia) → `revalidateTag("catalog")`.
 
@@ -269,70 +269,79 @@ Setelah COMMIT, API katalog langsung menghitung `qty_on_hand − qty_reserved` d
 - Format error seragam: `{"code": "INSUFFICIENT_STOCK", "message": "...", "details": {...}}`.
 - Pagination cursor/halaman, filter via query string, urutan eksplisit.
 - Endpoint yang membuat order/pembayaran wajib header `Idempotency-Key`.
+- **Aturan penamaan route:** nama sumber daya bahasa Indonesia, huruf kecil, tanda hubung bila perlu, tanpa jamak, garis miring di akhir. Prefiks `auth/` dan `audit/` dipertahankan karena sudah dipakai kode.
 
-| Area | Endpoint (contoh) | Akses |
-|---|---|---|
-| Auth | `POST /auth/register/`, `/auth/login/`, `/auth/refresh/`, `/auth/logout/`, `GET /auth/me/` | publik / login |
-| Katalog | `GET /catalog/products/`, `GET /catalog/products/{slug}/` | tamu (ringkas), login (penuh) |
-| Keranjang & order | `POST /orders/checkout/`, `GET /orders/mine/`, `GET /orders/{id}/` | user (milik sendiri) |
-| Pembayaran | `POST /payments/webhook/` | gateway (signature) |
-| POS | `GET /pos/variants/by-token/{token}/`, `GET /pos/variants/?q=`, `POST /pos/shifts/open|close/`, `POST /pos/checkout/`, `POST /pos/orders/{id}/void/` | kasir, admin |
-| Inventory | `GET /inventory/stock/`, `POST /inventory/adjustments/`, `POST /inventory/opname/`, `GET /inventory/movements/` | kasir (baca), admin |
-| Produk (kelola) | `POST/PATCH /catalog/admin/products/`, `GET /catalog/admin/variants/{id}/qr/`, `POST /catalog/admin/labels/` | admin |
-| Procurement | `/procurement/suppliers/`, `/purchase-orders/`, `/goods-receipts/` | admin |
-| Keuangan & laporan | `/finance/...`, `/reports/sales/`, `/reports/profit-loss/`, `/reports/stock-value/` + ekspor | admin |
-| CRM | `/crm/customers/`, `/crm/members/`, `/crm/vouchers/` | admin; kasir (cari/daftar) |
+| Area | Endpoint | Akses | Status |
+|---|---|---|---|
+| Auth | `GET /auth/csrf/`; `POST /auth/daftar/`, `/auth/masuk/`, `/auth/keluar/`; `GET/PATCH /auth/saya/`; `POST /auth/2fa/setup/`, `/auth/2fa/verify/` | publik / login | sudah ada |
+| Akun (admin) | `GET/POST /auth/akun/`, `GET/PATCH /auth/akun/{id}/`, `POST /auth/akun/{id}/reset-password/`, `/auth/akun/{id}/reset-2fa/` | admin (+2FA) | sudah ada |
+| Katalog | `GET /katalog/kategori/`, `GET /katalog/produk/`, `GET /katalog/produk/{slug}/` | tamu (ringkas), login (penuh) | sudah ada |
+| Katalog (kelola) | `POST/PATCH /katalog/produk/`, `POST /katalog/produk/{slug}/foto/`, `GET /katalog/varian/{id}/qr/`, `POST /katalog/label/` | admin | rencana |
+| Keranjang & pesanan | `GET /keranjang/`, `POST /keranjang/item/`, `PATCH/DELETE /keranjang/item/{id}/`, `POST/DELETE /keranjang/voucher/`; `GET/POST /pesanan/`, `GET /pesanan/{nomor}/` | user (milik sendiri) | sudah ada |
+| Pembayaran | `POST /pembayaran/webhook/` | gateway (signature) | rencana |
+| Kasir (POS) | `GET /kasir/varian/`, `GET /kasir/varian/{qr_token}/`, `POST /kasir/shift/`, `POST /kasir/transaksi/`, `POST /kasir/transaksi/{nomor}/batal/`, `POST /kasir/retur/` | kasir, admin | rencana |
+| Stok | `GET /stok/`, `GET /stok/mutasi/`, `POST /stok/penyesuaian/`, `POST /stok/opname/` | kasir (baca), admin | rencana |
+| Pengadaan | `/pengadaan/pemasok/`, `/pengadaan/pesanan/`, `/pengadaan/penerimaan/` | admin | rencana |
+| Keuangan & laporan | `/keuangan/rekening/`, `/keuangan/pengeluaran/`, `/keuangan/hutang/`; `/laporan/penjualan/`, `/laporan/laba-rugi/`, `/laporan/nilai-stok/`, `/laporan/{nama}/ekspor/` | admin | rencana |
+| Pelanggan (CRM) | `/pelanggan/`, `/pelanggan/{id}/`, `/pelanggan/{id}/poin/`, `/pelanggan/voucher/` | admin; kasir (cari/daftar) | rencana |
+| Audit | `GET /audit/` | admin | sudah ada |
 
 ---
 
 ## 8. Autentikasi & Otorisasi
 
-### 8.1 Alur login (cookie)
+### 8.1 Alur login (sesi + CSRF)
 
-1. Browser `POST /auth/login/` ke API (`credentials: "include"`).
-2. API memverifikasi (axes aktif), lalu mengirim cookie:
-   - `mk_access` — JWT 15 menit, `HttpOnly; Secure; SameSite=Lax; Domain=.mankota.id`
-   - `mk_refresh` — 7 hari, dirotasi dan di-blacklist, `HttpOnly; Secure; SameSite=Lax; Path=/api/v1/auth/refresh/`
-3. Server Components Next.js meneruskan cookie ke API lewat `cookies()` saat fetch di server.
-4. Refresh otomatis saat access habis; logout menghapus cookie dan mem-blacklist refresh token.
-5. Karena memakai cookie, **CSRF tetap diwajibkan** untuk `POST/PUT/PATCH/DELETE`: kelas `CookieJWTAuthentication` memanggil pemeriksaan CSRF; frontend mengirim header `X-CSRFToken`.
-6. Admin wajib TOTP (`django-otp`) setelah password.
-7. Verifikasi TOTP berlaku **12 jam** sejak verifikasi; sesudahnya admin wajib TOTP ulang.
-
-> Alternatif lebih sederhana bila hanya frontend: sesi Django (`SessionAuthentication`) + CSRF. Boleh dipilih di awal; endpoint dan izin tidak berubah.
+1. Browser `GET /api/v1/auth/csrf/` → API memasang cookie `csrftoken` (tidak HttpOnly supaya JS bisa membacanya).
+2. Browser `POST /api/v1/auth/masuk/` (`credentials: "include"`, header `X-CSRFToken`) → API memverifikasi (throttle + lockout), lalu memasang cookie sesi:
+   - `sessionid` — `HttpOnly; Secure` (produksi); `SameSite=Lax`; `Domain=.mankota.id` lewat `COOKIE_DOMAIN`; umur 14 hari.
+3. Server Components Next.js meneruskan cookie ke API lewat `cookies()` saat fetch di server; fetch di browser memakai `credentials: "include"`.
+4. Tidak ada access/refresh token dan tidak ada rotasi. Logout (`POST /auth/keluar/`) menghapus sesi di server dan cookie di browser.
+5. **CSRF wajib** untuk `POST/PUT/PATCH/DELETE`; frontend mengirim header `X-CSRFToken` hasil baca cookie `csrftoken`. `CSRF_TRUSTED_ORIGINS` dibaca dari env; produksi wajib mengisi origin https.
+6. Admin wajib TOTP setelah password. Kode diverifikasi lewat `POST /auth/2fa/verify/`; sesi menyimpan `admin_2fa_user_id` + `admin_2fa_at`. Marker ini **dihapus di setiap login**, jadi admin harus verifikasi 2FA ulang tiap masuk. `IsAdmin` menolak permintaan bila marker tidak ada atau lebih tua dari 12 jam.
+7. Hanya `2fa/setup/` dan `2fa/verify/` memakai `IsAdminBootstrap` (cek role tanpa verifikasi 2FA), karena dipakai untuk mendaftarkan perangkat.
+8. Token untuk aplikasi mobile ditambahkan nanti bila perlu; endpoint dan izin tidak berubah.
 
 ### 8.2 Role dan izin
 
 - Tiga role: `admin`, `kasir`, `user`. Tamu bukan role.
-- DRF: `IsAdmin`, `IsKasirOrAdmin`, `IsOwnerOrAdmin` (object-level); default permission = **menolak** (`IsAuthenticated` + eksplisit per view).
+- DRF: `IsAdmin` (role admin **dan** 2FA terverifikasi), `IsKasirOrAdmin`, `IsOwnerOrAdmin` (object-level), `IsAdminBootstrap` (role admin saja, khusus setup/verify 2FA); default permission = **menolak** (`IsAuthenticated` + eksplisit per view).
 - Akun `kasir`/`admin` hanya dibuat admin. Registrasi publik selalu `user`.
 - Izin granular kasir (batas diskon, boleh void) disimpan per akun.
 - Matriks izin di `docs/PRD.md` bagian 2 diuji otomatis di backend (tiap endpoint × tiap role).
 
 ### 8.3 Peta rute frontend
 
-| Rute Next.js | Akses |
-|---|---|
-| `/`, `/katalog`, `/produk/[slug]`, `/q/[token]` | publik (konten bertingkat) |
-| `/login`, `/daftar`, `/lupa-password` | publik |
-| `/akun`, `/keranjang`, `/checkout`, `/pesanan` | `user` |
-| `/kasir/*` | `kasir`, `admin` |
-| `/dashboard/*` | `admin` (sebagian baca saja untuk `kasir`) |
+| Rute Next.js | Akses | Status |
+|---|---|---|
+| `/` | publik | sudah ada |
+| `/masuk`, `/daftar`, `/verifikasi-2fa` | publik | sudah ada |
+| `/koleksi` | publik (ringkas) | rencana (Prompt 3.1); saat ini masih butuh login |
+| `/produk/[slug]`, `/checkout`, `/pesanan/[nomor]` | `user` (middleware + layout) | sudah ada |
+| `/403` | halaman galat | sudah ada |
+| `/kasir/*` | `kasir`, `admin` | belum dibangun |
+| `/dashboard`, `/dashboard/audit` | `admin` saja | sudah ada |
+| `/q/[token]` | publik (konten bertingkat) | rencana |
+
+`kasir` yang membuka `/dashboard/*` mendapat 403. Matriks izin di `docs/PRD.md` bagian 2 menang atas aturan lama "sebagian baca saja".
 
 ---
 
 ## 9. Keamanan
 
 **Aplikasi (backend)**
-- Cookie `HttpOnly`/`Secure`/`SameSite`; token **tidak** di `localStorage`.
-- Argon2, `django-axes`, throttling DRF (Redis) untuk login, daftar, checkout, webhook.
+- Sesi Django di cookie `sessionid` (`HttpOnly`, `Secure`, `SameSite=Lax`); token **tidak** di `localStorage`/`sessionStorage`.
+- CSRF wajib untuk semua metode non-GET (`X-CSRFToken`). `CSRF_TRUSTED_ORIGINS` dibaca dari env; produksi wajib diisi dan hanya boleh origin https.
+- Argon2; throttle DRF 10/menit (login, daftar, reset password) dan 5/menit (2FA); lockout 5 kode 2FA salah → kunci 15 menit. Keduanya berbasis cache, jadi **Redis wajib di produksi** agar berlaku lintas worker.
+- 2FA admin: TOTP sendiri (`apps/accounts/totp.py`): 6 digit, langkah 30 detik, jendela ±1. Verifikasi terikat ke sesi, diulang tiap login, batas keras 12 jam.
+- Django admin **tidak dipasang** karena melewati 2FA. Admin pertama dibuat dengan `python manage.py buat_admin`. Foto produk dan data master dikelola lewat API/dashboard.
 - CORS: hanya `https://mankota.id` dengan credentials; bukan `*`.
 - `SECURE_SSL_REDIRECT`, HSTS, `SESSION/CSRF_COOKIE_SECURE`, `X_FRAME_OPTIONS`, `SECURE_CONTENT_TYPE_NOSNIFF`.
 - Validasi semua input lewat serializer; ORM parametris; query mentah dilarang kecuali direview.
 - Upload foto: whitelist tipe dan ukuran, proses ulang dengan Pillow, simpan di storage terpisah, nama acak.
 - Webhook pembayaran: verifikasi signature, idempoten, cek ulang status ke gateway. Data kartu tidak pernah menyentuh server (halaman bayar milik gateway).
 - Audit log: ubah harga, penyesuaian stok, void/retur, ubah role, login admin, reset 2FA.
-- Perangkat TOTP hilang: admin lain yang sudah terverifikasi me-reset 2FA (tanpa kode pemulihan); aksi dicatat di audit log. Admin tunggal memerlukan akses server.
+- Perangkat TOTP hilang: admin lain yang sudah terverifikasi me-reset 2FA lewat `POST /auth/akun/{id}/reset-2fa/` (tanpa kode pemulihan); aksi dicatat di audit log dan semua sesi target dicabut. Admin tunggal memerlukan akses server.
 
 **Frontend (Next.js)**
 - Header keamanan lewat `next.config.js`/middleware: CSP ketat, `Referrer-Policy`, `X-Content-Type-Options`, `frame-ancestors 'none'`.
@@ -391,9 +400,10 @@ Lingkungan: dev (lokal) · staging · prod
   - `frontend`: eslint → tsc → vitest → build → Playwright (alur kritis)
   - cek kontrak: generate OpenAPI → bandingkan dengan `frontend/src/types/api.d.ts`
 - Migrasi DB otomatis saat rilis; rollback lewat image sebelumnya.
+- Admin pertama dibuat sekali dengan `python manage.py buat_admin`; Django admin tidak di-deploy.
 
 **Variabel lingkungan**
-- `backend`: `DATABASE_URL`, `REDIS_URL`, `SECRET_KEY`, `ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS`, `COOKIE_DOMAIN`, `MIDTRANS_*`/`XENDIT_*`, `EMAIL_*`, `STORAGE_*`, `WEB_REVALIDATE_URL`, `REVALIDATE_SECRET`, `SENTRY_DSN`.
+- `backend`: `DATABASE_URL`, `REDIS_URL` (wajib di produksi untuk throttle/lockout), `SECRET_KEY`, `ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS`, `CSRF_TRUSTED_ORIGINS` (wajib, https), `COOKIE_DOMAIN`, `MIDTRANS_*`/`XENDIT_*`, `EMAIL_*`, `STORAGE_*`, `WEB_REVALIDATE_URL`, `REVALIDATE_SECRET`, `SENTRY_DSN`.
 - `frontend`: `NEXT_PUBLIC_API_URL` (browser), `API_INTERNAL_URL` (server-ke-server), `REVALIDATE_SECRET`, `NEXT_PUBLIC_SITE_URL`, `SENTRY_DSN`.
 
 ---
@@ -414,7 +424,7 @@ Lingkungan: dev (lokal) · staging · prod
 |---|---|---|
 | Backend dan frontend terpisah (rencana B) | Tim bisa kerja paralel; API siap dipakai mobile kelak; SEO tetap bagus lewat Next.js SSR/ISR | Dua codebase, kontrak API harus dijaga, auth lintas aplikasi lebih rumit |
 | Monorepo | Satu repo, satu PR untuk perubahan API + UI, mudah bagi pemula | Perlu CI per folder |
-| Domain induk sama (`mankota.id` / `api.mankota.id`) | Cookie `SameSite=Lax` jalan, tanpa token di JS | Perlu atur `COOKIE_DOMAIN` dan CORS dengan benar |
+| Domain induk sama (`mankota.id` / `api.mankota.id`) | Cookie `SameSite=Lax` jalan, tanpa token di JS | Perlu atur `COOKIE_DOMAIN`, `CSRF_TRUSTED_ORIGINS`, dan CORS dengan benar |
 | Cookie HttpOnly, bukan localStorage | Token tak bisa dicuri lewat XSS | Wajib CSRF protection |
 | Tipe TS digenerate dari OpenAPI | Frontend dan backend tidak melenceng | Wajib regenerate tiap API berubah |
 | Order POS dan online satu tabel | Laporan dan CRM terpadu | Field khusus channel nullable |

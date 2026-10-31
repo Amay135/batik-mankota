@@ -141,6 +141,8 @@ Hanya **3 role**. Pengunjung yang belum login bukan role, hanya status "tamu".
 - **F-ADM-02** Pengaturan toko (nama, alamat, logo, pajak, format struk, batas reservasi, aturan poin).
 - **F-ADM-03** Audit log tindakan sensitif (ubah harga, penyesuaian stok, void/retur, ubah role).
 
+> Registry ID admin: `ADM-xx` memetakan kemampuan PRD (F-ADM-xx → ADM-xx), `SEC-xx` untuk kendali keamanan lintas fitur tanpa fitur PRD. `ADM-02` sengaja tidak dipakai; F-ADM-02 (Pengaturan toko) memakai **ADM-31**. 2FA = **SEC-01**, reset 2FA = **SEC-02**.
+
 ---
 
 ## 5. Aturan Bisnis Penting
@@ -154,7 +156,7 @@ Hanya **3 role**. Pengunjung yang belum login bukan role, hanya status "tamu".
 7. **Data transaksi tidak dihapus**, hanya dibatalkan/di-void (soft delete).
 8. Mata uang Rupiah (IDR), bilangan bulat; zona waktu Asia/Jakarta.
 9. Setiap SKU punya tepat satu QR code permanen (tidak berubah walau harga berubah).
-10. Tamu dan User tidak pernah melihat jumlah stok persis maupun harga beli (hanya status Tersedia / Tinggal sedikit / Habis).
+10. Tamu dan User tidak pernah melihat jumlah stok persis maupun harga beli. Status stok yang tampil: **0 = Habis**, **1–5 = Tinggal sedikit**, **>5 = Tersedia**. Angka stok persis hanya untuk Admin dan Kasir, termasuk di teks galat.
 
 ---
 
