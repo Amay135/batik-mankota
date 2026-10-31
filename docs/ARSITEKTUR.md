@@ -297,6 +297,7 @@ Setelah COMMIT, API katalog langsung menghitung `qty_on_hand − qty_reserved` d
 4. Refresh otomatis saat access habis; logout menghapus cookie dan mem-blacklist refresh token.
 5. Karena memakai cookie, **CSRF tetap diwajibkan** untuk `POST/PUT/PATCH/DELETE`: kelas `CookieJWTAuthentication` memanggil pemeriksaan CSRF; frontend mengirim header `X-CSRFToken`.
 6. Admin wajib TOTP (`django-otp`) setelah password.
+7. Verifikasi TOTP berlaku **12 jam** sejak verifikasi; sesudahnya admin wajib TOTP ulang.
 
 > Alternatif lebih sederhana bila hanya frontend: sesi Django (`SessionAuthentication`) + CSRF. Boleh dipilih di awal; endpoint dan izin tidak berubah.
 
@@ -330,7 +331,8 @@ Setelah COMMIT, API katalog langsung menghitung `qty_on_hand − qty_reserved` d
 - Validasi semua input lewat serializer; ORM parametris; query mentah dilarang kecuali direview.
 - Upload foto: whitelist tipe dan ukuran, proses ulang dengan Pillow, simpan di storage terpisah, nama acak.
 - Webhook pembayaran: verifikasi signature, idempoten, cek ulang status ke gateway. Data kartu tidak pernah menyentuh server (halaman bayar milik gateway).
-- Audit log: ubah harga, penyesuaian stok, void/retur, ubah role, login admin.
+- Audit log: ubah harga, penyesuaian stok, void/retur, ubah role, login admin, reset 2FA.
+- Perangkat TOTP hilang: admin lain yang sudah terverifikasi me-reset 2FA (tanpa kode pemulihan); aksi dicatat di audit log. Admin tunggal memerlukan akses server.
 
 **Frontend (Next.js)**
 - Header keamanan lewat `next.config.js`/middleware: CSP ketat, `Referrer-Policy`, `X-Content-Type-Options`, `frame-ancestors 'none'`.

@@ -1,9 +1,14 @@
+import time
+
+from django.conf import settings
 from rest_framework.exceptions import APIException
 from rest_framework.permissions import BasePermission
 
 # Nilai = pk admin yang sudah lolos TOTP di sesi ini, bukan boolean. Django
 # mempertahankan isi sesi saat login(), jadi pk mencegah flag basi ikut terbawa.
 ADMIN_2FA_SESSION_KEY = "admin_2fa_user_id"
+ADMIN_2FA_AT_SESSION_KEY = "admin_2fa_at"
+BATAS_VERIFIKASI_2FA_DETIK = 12 * 60 * 60
 
 
 class GuestNotAllowed(APIException):
@@ -25,7 +30,16 @@ def _require_authenticated(request):
 
 
 def _admin_verified(request):
-    return request.session.get(ADMIN_2FA_SESSION_KEY) == request.user.pk
+    if not request.user.otp_enabled:
+        return False
+    if request.session.get(ADMIN_2FA_SESSION_KEY) != request.user.pk:
+        return False
+    verified_at = request.session.get(ADMIN_2FA_AT_SESSION_KEY)
+    if not verified_at or time.time() - verified_at > BATAS_VERIFIKASI_2FA_DETIK:
+        request.session.pop(ADMIN_2FA_SESSION_KEY, None)
+        request.session.pop(ADMIN_2FA_AT_SESSION_KEY, None)
+        return False
+    return True
 
 
 class IsUser(BasePermission):
@@ -61,3 +75,10 @@ class IsKasirOrAdmin(BasePermission):
         if request.user.role == "kasir":
             return True
         return request.user.role == "admin" and _admin_verified(request)
+
+
+class SchemaPermission(BasePermission):
+    """Terbuka saat DEBUG (pengembangan); selain itu admin dengan 2FA terverifikasi."""
+
+    def has_permission(self, request, view):
+        return settings.DEBUG or IsAdmin().has_permission(request, view)

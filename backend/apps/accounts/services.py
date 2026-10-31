@@ -1,6 +1,10 @@
+import time
+
 from django.contrib.auth import login
+from django.contrib.sessions.models import Session
 from django.core.cache import cache
 from django.db import transaction
+from django.utils import timezone
 from rest_framework.exceptions import APIException, ValidationError
 
 from apps.audit.models import AuditLog
@@ -8,7 +12,7 @@ from apps.audit.services import catat
 
 from . import totp
 from .models import User
-from .permissions import ADMIN_2FA_SESSION_KEY
+from .permissions import ADMIN_2FA_AT_SESSION_KEY, ADMIN_2FA_SESSION_KEY
 
 BATAS_GAGAL_2FA = 5
 KUNCI_2FA_DETIK = 15 * 60
@@ -39,6 +43,7 @@ def client_ip(request):
 def masuk(request, user):
     login(request, user, backend="django.contrib.auth.backends.ModelBackend")
     request.session.pop(ADMIN_2FA_SESSION_KEY, None)
+    request.session.pop(ADMIN_2FA_AT_SESSION_KEY, None)
     if user.role == User.Role.ADMIN:
         catat(
             actor=user,
@@ -104,6 +109,35 @@ def _kunci_lock(user):
     return f"2fa-lock:{user.pk}"
 
 
+def _cabut_sesi(user):
+    # shortcut: iterasi sesi aktif; ganti bila jumlah sesi besar.
+    for sesi in Session.objects.filter(expire_date__gte=timezone.now()):
+        if sesi.get_decoded().get("_auth_user_id") == str(user.pk):
+            sesi.delete()
+
+
+def reset_2fa(actor, akun, ip=None):
+    if akun.pk == actor.pk:
+        raise ValidationError("Anda tidak dapat me-reset 2FA akun sendiri.")
+    with transaction.atomic():
+        sebelum = {"otp_enabled": akun.otp_enabled}
+        akun.otp_secret = ""
+        akun.otp_enabled = False
+        akun.save(update_fields=["otp_secret", "otp_enabled"])
+        _cabut_sesi(akun)
+        cache.delete_many([_kunci_gagal(akun), _kunci_lock(akun)])
+        catat(
+            actor=actor,
+            action=AuditLog.Action.OTP_RESET,
+            entity="User",
+            entity_id=akun.pk,
+            before=sebelum,
+            after={"otp_enabled": False},
+            ip=ip,
+        )
+    return akun
+
+
 def periksa_kode_2fa(user, code):
     """Verifikasi TOTP + hitung gagal. Lockout memakai cache karena django-axes
     belum dipakai di proyek ini."""
@@ -124,3 +158,4 @@ def verifikasi_2fa(request):
     user.otp_enabled = True
     user.save(update_fields=["otp_enabled"])
     request.session[ADMIN_2FA_SESSION_KEY] = user.pk
+    request.session[ADMIN_2FA_AT_SESSION_KEY] = int(time.time())
