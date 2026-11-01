@@ -18,7 +18,7 @@ from apps.accounts.permissions import (
 )
 from apps.audit.models import AuditLog
 
-FASE_SAAT_INI = 0
+FASE_SAAT_INI = 1
 PASSWORD = "rahasia-kuat-1"
 ADMIN_ROUTE_PERMISSIONS = (IsAdmin, IsAdminBootstrap, IsKasirOrAdmin)
 
@@ -478,9 +478,38 @@ def test_customer_endpoints_reject_admin_kasir(admin, kasir):
         assert client.get("/api/v1/pesanan/MK-XXX/").status_code == 403
 
 
-@pytest.mark.skip(reason="cost_price belum ada; ADM-10 fase 1")
-def test_cost_price_hanya_untuk_admin():
-    pass
+def test_cost_price_hanya_untuk_admin(admin, kasir, user, db):
+    from apps.catalog.models import Kategori, Motif, Produk, Varian
+
+    kategori = Kategori.objects.create(nama="Pria", slug="pria", label_pendek="Pria")
+    motif = Motif.objects.create(nama="Parang", slug="parang")
+    produk = Produk.objects.create(
+        nama="Kemeja",
+        slug="kemeja",
+        kategori=kategori,
+        teknik="cap",
+        motif=motif,
+        bentuk="kemeja",
+        warna_utama="indigo",
+        harga=365_000,
+    )
+    Varian.objects.create(
+        produk=produk,
+        warna="indigo",
+        ukuran="L",
+        sku="SKU-1",
+        harga_beli=200_000,
+    )
+
+    admin_data = (
+        _verified(admin).get(f"/api/v1/katalog/kelola/produk/{produk.pk}/").json()
+    )
+    assert admin_data["varian"][0]["harga_beli"] == 200_000
+
+    for client in (_login(kasir), _login(user)):
+        body = client.get(f"/api/v1/katalog/produk/{produk.slug}/").content
+        assert b"harga_beli" not in body
+        assert b"cost_price" not in body
 
 
 def test_django_admin_tidak_tersedia():

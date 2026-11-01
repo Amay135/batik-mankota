@@ -141,7 +141,7 @@ Hanya **3 role**. Pengunjung yang belum login bukan role, hanya status "tamu".
 - **F-ADM-02** Pengaturan toko (nama, alamat, logo, pajak, format struk, batas reservasi, aturan poin).
 - **F-ADM-03** Audit log tindakan sensitif (ubah harga, penyesuaian stok, void/retur, ubah role).
 
-> Registry ID admin: `ADM-xx` memetakan kemampuan PRD (F-ADM-xx → ADM-xx), `SEC-xx` untuk kendali keamanan lintas fitur tanpa fitur PRD. `ADM-02` sengaja tidak dipakai; F-ADM-02 (Pengaturan toko) memakai **ADM-31**. 2FA = **SEC-01**, reset 2FA = **SEC-02**.
+> Registry ID admin: `ADM-xx` memetakan kemampuan PRD (F-ADM-xx → ADM-xx), `SEC-xx` untuk kendali keamanan lintas fitur tanpa fitur PRD. `ADM-02` sengaja tidak dipakai; F-ADM-02 (Pengaturan toko) memakai **ADM-31**, F-INV-01 (Kelola katalog) memakai **ADM-10**. 2FA = **SEC-01**, reset 2FA = **SEC-02**.
 
 ---
 

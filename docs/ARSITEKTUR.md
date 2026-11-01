@@ -276,7 +276,8 @@ Setelah COMMIT, API katalog langsung menghitung `qty_on_hand − qty_reserved` d
 | Auth | `GET /auth/csrf/`; `POST /auth/daftar/`, `/auth/masuk/`, `/auth/keluar/`; `GET/PATCH /auth/saya/`; `POST /auth/2fa/setup/`, `/auth/2fa/verify/` | publik / login | sudah ada |
 | Akun (admin) | `GET/POST /auth/akun/`, `GET/PATCH /auth/akun/{id}/`, `POST /auth/akun/{id}/reset-password/`, `/auth/akun/{id}/reset-2fa/` | admin (+2FA) | sudah ada |
 | Katalog | `GET /katalog/kategori/`, `GET /katalog/produk/`, `GET /katalog/produk/{slug}/` | tamu (ringkas), login (penuh) | sudah ada |
-| Katalog (kelola) | `POST/PATCH /katalog/produk/`, `POST /katalog/produk/{slug}/foto/`, `GET /katalog/varian/{id}/qr/`, `POST /katalog/label/` | admin | rencana |
+| Katalog (kelola) | `GET/POST /katalog/kelola/kategori/` dan `/{id}/`; idem `/motif/`; `GET/POST /katalog/kelola/produk/` dan `/{id}/`; `GET/POST /katalog/kelola/produk/{id}/varian/`; `POST /katalog/kelola/produk/{id}/foto/`; `GET/PUT/PATCH/DELETE /katalog/kelola/varian/{id}/`; `DELETE /katalog/kelola/foto/{id}/` | admin (+2FA) | sudah ada |
+| Katalog (QR) | `GET /katalog/varian/{id}/qr/`, `POST /katalog/label/` | admin | rencana |
 | Keranjang & pesanan | `GET /keranjang/`, `POST /keranjang/item/`, `PATCH/DELETE /keranjang/item/{id}/`, `POST/DELETE /keranjang/voucher/`; `GET/POST /pesanan/`, `GET /pesanan/{nomor}/` | user (milik sendiri) | sudah ada |
 | Pembayaran | `POST /pembayaran/webhook/` | gateway (signature) | rencana |
 | Kasir (POS) | `GET /kasir/varian/`, `GET /kasir/varian/{qr_token}/`, `POST /kasir/shift/`, `POST /kasir/transaksi/`, `POST /kasir/transaksi/{nomor}/batal/`, `POST /kasir/retur/` | kasir, admin | rencana |

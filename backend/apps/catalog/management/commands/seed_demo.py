@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from apps.accounts.models import User
-from apps.catalog.models import FotoProduk, Kategori, Produk, Varian
+from apps.catalog.models import FotoProduk, Kategori, Motif, Produk, Varian
 from apps.orders.models import ItemKeranjang, Keranjang, Voucher
 
 KATEGORI = [
@@ -109,6 +109,11 @@ class Command(BaseCommand):
                 slug=slug, defaults={"nama": nama, "label_pendek": label, "urutan": urutan}
             )
 
+        motif_obj = {
+            slug: Motif.objects.update_or_create(slug=slug, defaults={"nama": nama})[0]
+            for slug, (nama, *_cerita) in MOTIF.items()
+        }
+
         seq = {}
         rancangan = rancang_produk(rng)
         for idx, (nama, kslug, bentuk, motif, warna, teknik, harga) in enumerate(rancangan):
@@ -125,7 +130,7 @@ class Command(BaseCommand):
             produk, _ = Produk.objects.update_or_create(
                 slug=slugify(nama),
                 defaults=dict(
-                    nama=nama, kategori=kategori[kslug], teknik=teknik, motif=motif, bentuk=bentuk,
+                    nama=nama, kategori=kategori[kslug], teknik=teknik, motif=motif_obj[motif], bentuk=bentuk,
                     warna_utama=warna, koleksi=KOLEKSI[idx % len(KOLEKSI)], perajin=PERAJIN[idx % len(PERAJIN)],
                     deskripsi=(
                         "Motif klasik, karakter modern. Kemeja batik cap berbahan katun prima yang lembut, "
