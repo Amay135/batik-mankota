@@ -28,7 +28,7 @@ class ItemKeranjangSerializer(serializers.ModelSerializer):
         p = o.varian.produk
         fotos = list(p.foto.all())
         return {
-            "slug": p.slug, "nama": p.nama, "motif": p.motif, "bentuk": p.bentuk,
+            "slug": p.slug, "nama": p.nama, "motif": p.motif.slug, "bentuk": p.bentuk,
             "warna_utama": p.warna_utama,
             "foto_utama": url_foto(fotos[0], self.context.get("request")) if fotos else None,
         }

@@ -87,3 +87,33 @@ ADMIN_CAPABILITIES = [
         "requires_2fa": True,
     },
 ]
+
+
+def _katalog(path, methods):
+    # ADM-10 = kelola katalog (PRD F-INV-01). Nomor 31 dipakai rencana pengaturan toko.
+    return [
+        {
+            "id": "ADM-10",
+            "rujukan": "PRD F-INV-01; ARSITEKTUR 7 (Katalog kelola)",
+            "fase": 1,
+            "method": method,
+            "path": f"/api/v1/katalog/kelola/{path}",
+            "roles": ("admin",),
+            "requires_2fa": True,
+        }
+        for method in methods
+    ]
+
+
+ADMIN_CAPABILITIES += [
+    *_katalog("kategori/", ("GET", "POST")),
+    *_katalog("kategori/<int:pk>/", ("GET", "PUT", "PATCH", "DELETE")),
+    *_katalog("motif/", ("GET", "POST")),
+    *_katalog("motif/<int:pk>/", ("GET", "PUT", "PATCH", "DELETE")),
+    *_katalog("produk/", ("GET", "POST")),
+    *_katalog("produk/<int:pk>/", ("GET", "PUT", "PATCH", "DELETE")),
+    *_katalog("produk/<int:pk>/varian/", ("GET", "POST")),
+    *_katalog("produk/<int:pk>/foto/", ("POST",)),
+    *_katalog("varian/<int:pk>/", ("GET", "PUT", "PATCH", "DELETE")),
+    *_katalog("foto/<int:pk>/", ("DELETE",)),
+]

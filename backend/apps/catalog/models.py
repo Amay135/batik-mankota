@@ -1,15 +1,37 @@
+import secrets
+
 from django.db import models
+
+
+def generate_qr_token():
+    """Token acak aman URL; hanya dipakai saat varian dibuat (permanen)."""
+    return secrets.token_urlsafe(12)
 
 
 class Kategori(models.Model):
     nama = models.CharField(max_length=60)
     slug = models.SlugField(unique=True)
-    label_pendek = models.CharField(max_length=30, help_text="Dipakai di kartu produk, mis. Pria")
+    label_pendek = models.CharField(
+        max_length=30, help_text="Dipakai di kartu produk, mis. Pria"
+    )
     urutan = models.PositiveSmallIntegerField(default=0)
 
     class Meta:
         ordering = ["urutan", "id"]
         verbose_name_plural = "kategori"
+
+    def __str__(self):
+        return self.nama
+
+
+class Motif(models.Model):
+    nama = models.CharField(max_length=60)
+    slug = models.SlugField(unique=True)
+    deskripsi = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["nama"]
+        verbose_name_plural = "motif"
 
     def __str__(self):
         return self.nama
@@ -29,10 +51,14 @@ class Produk(models.Model):
 
     nama = models.CharField(max_length=140)
     slug = models.SlugField(unique=True, max_length=160)
-    kategori = models.ForeignKey(Kategori, on_delete=models.PROTECT, related_name="produk")
+    kategori = models.ForeignKey(
+        Kategori, on_delete=models.PROTECT, related_name="produk"
+    )
     teknik = models.CharField(max_length=12, choices=Teknik.choices)
-    motif = models.SlugField(help_text="parang, kawung, truntum, sekar-jagad, mega-mendung")
-    bentuk = models.SlugField(help_text="kemeja, blus, dress, rok, outer, kain, selendang, pouch")
+    motif = models.ForeignKey(Motif, on_delete=models.PROTECT, related_name="produk")
+    bentuk = models.SlugField(
+        help_text="kemeja, blus, dress, rok, outer, kain, selendang, pouch"
+    )
     warna_utama = models.CharField(max_length=10, choices=Warna.choices)
     koleksi = models.CharField(max_length=80, blank=True)
     perajin = models.CharField(max_length=80, blank=True)
@@ -45,7 +71,9 @@ class Produk(models.Model):
     rating = models.DecimalField(max_digits=2, decimal_places=1, default=0)
     jumlah_ulasan = models.PositiveIntegerField(default=0)
     terjual = models.PositiveIntegerField(default=0)
-    unggulan = models.BooleanField(default=False, help_text="Tampil dengan lencana Pilihan Mankota")
+    unggulan = models.BooleanField(
+        default=False, help_text="Tampil dengan lencana Pilihan Mankota"
+    )
     aktif = models.BooleanField(default=True)
     dibuat = models.DateTimeField(auto_now_add=True)
 
@@ -62,7 +90,11 @@ class Produk(models.Model):
 
     @property
     def label(self):
-        teknik = "Kombinasi" if self.teknik == self.Teknik.KOMBINASI else f"Batik {self.teknik}"
+        teknik = (
+            "Kombinasi"
+            if self.teknik == self.Teknik.KOMBINASI
+            else f"Batik {self.teknik}"
+        )
         return f"{self.kategori.label_pendek} · {teknik}"
 
 
@@ -81,11 +113,21 @@ class Varian(models.Model):
     sku = models.CharField(max_length=40, unique=True)
     # Sementara stok disimpan di sini; modul inventory kelak menjadi sumber tunggal.
     stok = models.PositiveIntegerField(default=0)
+    harga_beli = models.PositiveIntegerField(
+        default=0, help_text="Harga beli/HPP, Rupiah tanpa desimal; hanya untuk admin"
+    )
+    # Dibuat sekali, tidak pernah dihitung ulang: isi QR dan riwayat cetak tetap sah.
+    qr_token = models.CharField(
+        max_length=32, unique=True, editable=False, default=generate_qr_token
+    )
+    aktif = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["id"]
         constraints = [
-            models.UniqueConstraint(fields=["produk", "warna", "ukuran"], name="varian_unik"),
+            models.UniqueConstraint(
+                fields=["produk", "warna", "ukuran"], name="varian_unik"
+            ),
         ]
         verbose_name_plural = "varian"
 
@@ -103,10 +145,13 @@ class FotoProduk(models.Model):
     produk = models.ForeignKey(Produk, on_delete=models.CASCADE, related_name="foto")
     jenis = models.CharField(max_length=10, choices=Jenis.choices, default=Jenis.DEPAN)
     gambar = models.ImageField(
-        upload_to="produk/", blank=True, null=True,
+        upload_to="produk/",
+        blank=True,
+        null=True,
         help_text="Kosongkan untuk memakai ilustrasi motif otomatis",
     )
     urutan = models.PositiveSmallIntegerField(default=0)
+    alt = models.CharField(max_length=160, blank=True)
 
     class Meta:
         ordering = ["urutan", "id"]

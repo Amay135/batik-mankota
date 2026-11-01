@@ -107,7 +107,7 @@ def buat_pesanan(user, data):
     for i in items:
         v, p = i.varian, i.varian.produk
         ItemPesanan.objects.create(
-            pesanan=pesanan, varian=v, nama=p.nama, slug=p.slug, motif=p.motif, bentuk=p.bentuk,
+            pesanan=pesanan, varian=v, nama=p.nama, slug=p.slug, motif=p.motif.slug, bentuk=p.bentuk,
             warna=v.warna, ukuran=v.ukuran, sku=v.sku, harga=p.harga, jumlah=i.jumlah,
         )
         v.stok -= i.jumlah
