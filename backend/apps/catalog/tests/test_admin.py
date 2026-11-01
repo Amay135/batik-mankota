@@ -13,6 +13,7 @@ from apps.accounts.admin_scope import ADMIN_CAPABILITIES
 from apps.accounts.models import User
 from apps.audit.models import AuditLog
 from apps.catalog.models import FotoProduk, Kategori, Motif, Produk, Varian
+from apps.inventory.services import add_stock, reserve
 from apps.orders.models import ItemKeranjang, ItemPesanan, Keranjang, Pesanan
 
 PASSWORD = "rahasia-kuat-1"
@@ -198,6 +199,26 @@ def test_perubahan_harga_produk_tercatat_di_audit(admin, produk):
     assert log.before == {"harga": 365_000}
     assert log.after == {"harga": 400_000}
     assert log.actor.email == "admin@mankota.test"
+
+
+def test_stok_katalog_dibaca_dari_inventory(admin, produk, varian):
+    add_stock(varian.pk, 10)
+    reserve([(varian.pk, 6)], order_ref="TES-1")
+
+    data = admin.get(f"/api/v1/katalog/produk/{produk.slug}/").json()
+    v = next(item for item in data["varian"] if item["id"] == varian.pk)
+    assert v["stok"] == 4
+    assert "status_stok" not in v
+
+    pelanggan = User.objects.create_user(
+        email="pembeli-stok@mankota.test",
+        password=PASSWORD,
+        nama_lengkap="Pembeli",
+    )
+    body = _masuk(pelanggan).get(f"/api/v1/katalog/produk/{produk.slug}/").json()
+    v = next(item for item in body["varian"] if item["id"] == varian.pk)
+    assert v["status_stok"] == "Tinggal sedikit"
+    assert "stok" not in v
 
 
 def test_harga_beli_hanya_bocor_di_serializer_admin(admin, produk, varian):

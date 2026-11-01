@@ -1,8 +1,12 @@
+import pytest
 from rest_framework.test import APIClient
 
 from apps.accounts.models import User
 from apps.catalog.models import Varian
 from apps.catalog.serializers import status_stok
+from apps.inventory.models import Stock, StockMovement
+from apps.orders import services as order_services
+from apps.orders.models import ItemKeranjang, ItemPesanan, Pesanan
 
 ALAMAT = {
     "nama_lengkap": "Rina Wulandari", "whatsapp": "0812 8690 1234", "email": "rina@email.com",
@@ -84,15 +88,41 @@ def test_keranjang_demo_sama_dengan_desain(client_login):
 
 def test_checkout_mengurangi_stok_dan_kosongkan_keranjang(client_login):
     v = Varian.objects.get(sku="KM-001-ID-L")
-    stok = v.stok
+    stok = Stock.objects.get(variant=v).qty_on_hand
     r = client_login.post("/api/v1/pesanan/", ALAMAT, format="json")
     assert r.status_code == 201, r.content
     d = r.json()
     assert d["status"] == "menunggu_pembayaran" and d["nomor_va"] and len(d["item"]) == 2
-    v.refresh_from_db()
-    assert v.stok == stok - 1
+    assert Stock.objects.get(variant=v).qty_on_hand == stok - 1
+    assert (
+        StockMovement.objects.filter(
+            variant=v, type=StockMovement.Type.ONLINE_OUT, ref_id=d["nomor"]
+        ).count()
+        == 1
+    )
     assert client_login.get("/api/v1/keranjang/").json()["item"] == []
     assert client_login.get(f"/api/v1/pesanan/{d['nomor']}/").status_code == 200
+
+
+def test_checkout_gagal_di_tengah_rollback_stok_dan_ledger(seeded, monkeypatch):
+    user = User.objects.get(email="rina.wulandari@email.com")
+    v = Varian.objects.get(sku="KM-001-ID-L")
+    stok_awal = Stock.objects.get(variant=v).qty_on_hand
+    gerak_awal = StockMovement.objects.filter(variant=v).count()
+    pesanan_awal = Pesanan.objects.count()
+    item_awal = ItemKeranjang.objects.filter(keranjang__user=user).count()
+
+    def gagal(**_):
+        raise RuntimeError("gagal menyimpan item pesanan")
+
+    monkeypatch.setattr(ItemPesanan.objects, "create", gagal)
+    with pytest.raises(RuntimeError):
+        order_services.buat_pesanan(user, ALAMAT)
+
+    assert Stock.objects.get(variant=v).qty_on_hand == stok_awal
+    assert StockMovement.objects.filter(variant=v).count() == gerak_awal
+    assert Pesanan.objects.count() == pesanan_awal
+    assert ItemKeranjang.objects.filter(keranjang__user=user).count() == item_awal
 
 
 def test_pesanan_milik_orang_lain_tidak_bisa_dibuka(client_login):
@@ -104,10 +134,11 @@ def test_pesanan_milik_orang_lain_tidak_bisa_dibuka(client_login):
 
 def test_tidak_bisa_melebihi_stok(client_login):
     v = Varian.objects.get(sku="KM-001-ID-L")
+    tersedia = Stock.objects.get(variant=v).qty_on_hand
     r = client_login.post("/api/v1/keranjang/item/", {"varian_id": v.id, "jumlah": 999}, format="json")
     assert r.status_code == 400
     # PRD F-LP-05/5.10: user hanya melihat status, bukan angka stok — termasuk di teks galat.
-    assert str(v.stok) not in r.content.decode()
+    assert str(tersedia) not in r.content.decode()
 
 
 def test_voucher(client_login):

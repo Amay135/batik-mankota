@@ -1,4 +1,7 @@
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
+
+from apps.inventory.selectors import available_for_variant
 
 from .models import FotoProduk, Kategori, Motif, Produk, Varian
 
@@ -75,14 +78,19 @@ class ProdukListSerializer(serializers.ModelSerializer):
 
 
 class VarianSerializer(serializers.ModelSerializer):
+    stok = serializers.SerializerMethodField()
     status_stok = serializers.SerializerMethodField()
 
     class Meta:
         model = Varian
         fields = ["id", "warna", "ukuran", "sku", "stok", "status_stok"]
 
+    @extend_schema_field({"type": "integer"})
+    def get_stok(self, obj):
+        return available_for_variant(obj)
+
     def get_status_stok(self, obj):
-        return status_stok(obj.stok)
+        return status_stok(available_for_variant(obj))
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -129,7 +137,7 @@ class ProdukDetailSerializer(ProdukListSerializer):
         ]
 
     def get_tersedia(self, obj):
-        return any(v.stok > 0 for v in obj.varian.all())
+        return any(available_for_variant(v) > 0 for v in obj.varian.all())
 
     def get_terkait(self, obj):
         qs = (
@@ -169,6 +177,7 @@ class FotoAdminSerializer(serializers.ModelSerializer):
 
 
 class VarianAdminSerializer(serializers.ModelSerializer):
+    stok = serializers.SerializerMethodField()
     status_stok = serializers.SerializerMethodField()
 
     class Meta:
@@ -186,10 +195,14 @@ class VarianAdminSerializer(serializers.ModelSerializer):
             "stok",
             "status_stok",
         ]
-        read_only_fields = ["produk", "qr_token", "stok"]
+        read_only_fields = ["produk", "qr_token"]
+
+    @extend_schema_field({"type": "integer", "readOnly": True})
+    def get_stok(self, obj) -> int:
+        return available_for_variant(obj)
 
     def get_status_stok(self, obj) -> str:
-        return status_stok(obj.stok)
+        return status_stok(available_for_variant(obj))
 
 
 class ProdukAdminSerializer(serializers.ModelSerializer):

@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsUser
 from apps.catalog.models import Varian
+from apps.inventory.selectors import available_for_variant
 
 from . import services
 from .models import ItemKeranjang, Pesanan, Voucher
@@ -47,7 +48,9 @@ class TambahItemView(APIView):
     @transaction.atomic
     def post(self, request):
         try:
-            varian = Varian.objects.select_related("produk").get(pk=request.data.get("varian_id"), produk__aktif=True)
+            varian = Varian.objects.select_related("produk", "stock").get(
+                pk=request.data.get("varian_id"), produk__aktif=True
+            )
             jumlah = int(request.data.get("jumlah", 1))
         except (Varian.DoesNotExist, TypeError, ValueError):
             raise ValidationError({"detail": "Varian produk tidak ditemukan."})
@@ -56,8 +59,9 @@ class TambahItemView(APIView):
 
         k = services.keranjang_user(request.user)
         item, _ = ItemKeranjang.objects.get_or_create(keranjang=k, varian=varian, defaults={"jumlah": 0})
-        if item.jumlah + jumlah > varian.stok:
-            raise ValidationError({"detail": "Stok habis." if varian.stok < 1 else "Jumlah melebihi stok yang tersedia."})
+        tersedia = available_for_variant(varian)
+        if item.jumlah + jumlah > tersedia:
+            raise ValidationError({"detail": "Stok habis." if tersedia < 1 else "Jumlah melebihi stok yang tersedia."})
         item.jumlah += jumlah
         item.save(update_fields=["jumlah"])
         return respons_keranjang(request)
@@ -69,7 +73,7 @@ class ItemView(APIView):
     def _item(self, request, pk):
         k = services.keranjang_user(request.user)
         try:
-            return k.item.select_related("varian").get(pk=pk)
+            return k.item.select_related("varian", "varian__stock").get(pk=pk)
         except ItemKeranjang.DoesNotExist:
             raise ValidationError({"detail": "Item tidak ditemukan."})
 
@@ -82,8 +86,9 @@ class ItemView(APIView):
             raise ValidationError({"detail": "Jumlah tidak valid."})
         if jumlah < 1:
             raise ValidationError({"detail": "Jumlah minimal 1."})
-        if jumlah > item.varian.stok:
-            raise ValidationError({"detail": "Stok habis." if item.varian.stok < 1 else "Jumlah melebihi stok yang tersedia."})
+        tersedia = available_for_variant(item.varian)
+        if jumlah > tersedia:
+            raise ValidationError({"detail": "Stok habis." if tersedia < 1 else "Jumlah melebihi stok yang tersedia."})
         item.jumlah = jumlah
         item.save(update_fields=["jumlah"])
         return respons_keranjang(request)

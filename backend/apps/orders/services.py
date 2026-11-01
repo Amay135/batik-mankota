@@ -7,6 +7,9 @@ from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
 from apps.catalog.models import Varian
+from apps.inventory.exceptions import InsufficientStock
+from apps.inventory.models import StockMovement
+from apps.inventory.services import consume_direct
 
 from .models import ItemKeranjang, ItemPesanan, Keranjang, Pesanan
 
@@ -20,7 +23,9 @@ def keranjang_user(user):
 
 def item_keranjang(keranjang):
     return list(
-        keranjang.item.select_related("varian__produk__kategori").prefetch_related("varian__produk__foto")
+        keranjang.item.select_related(
+            "varian__stock", "varian__produk__kategori"
+        ).prefetch_related("varian__produk__foto")
     )
 
 
@@ -62,18 +67,17 @@ def buat_pesanan(user, data):
     if not items:
         raise ValidationError({"detail": "Keranjang masih kosong."})
 
-    # Kunci baris varian (urut by id) agar dua checkout bersamaan tidak oversell.
+    # Penguncian dan pengurangan stok ditangani inventory.services (satu sumber stok).
     varian = {
         v.id: v
-        for v in Varian.objects.select_for_update()
-        .select_related("produk")
-        .filter(id__in=[i.varian_id for i in items])
-        .order_by("id")
+        for v in Varian.objects.select_related("produk").filter(
+            id__in=[i.varian_id for i in items]
+        )
     }
     for i in items:
         v = varian[i.varian_id]
-        if not v.produk.aktif or v.stok < i.jumlah:
-            raise ValidationError({"detail": f"Stok {v.produk.nama} ({v.warna}/{v.ukuran}) tidak mencukupi."})
+        if not v.produk.aktif:
+            raise ValidationError({"detail": "Produk tidak tersedia."})
         i.varian = v
 
     r = hitung_ringkasan(items, keranjang.voucher)
@@ -104,14 +108,26 @@ def buat_pesanan(user, data):
         pesanan.nomor_va = f"{prefix}{pesanan.pk:08d}{secrets.randbelow(10**3):03d}"
         pesanan.save(update_fields=["nomor_va"])
 
+    try:
+        consume_direct(
+            [(i.varian_id, i.jumlah) for i in items],
+            ref_type="order",
+            ref_id=pesanan.nomor,
+            actor=user,
+            movement_type=StockMovement.Type.ONLINE_OUT,
+        )
+    except InsufficientStock as exc:
+        v = varian[exc.variant_id]
+        raise ValidationError(
+            {"detail": f"Stok {v.produk.nama} ({v.warna}/{v.ukuran}) tidak mencukupi."}
+        ) from exc
+
     for i in items:
         v, p = i.varian, i.varian.produk
         ItemPesanan.objects.create(
             pesanan=pesanan, varian=v, nama=p.nama, slug=p.slug, motif=p.motif.slug, bentuk=p.bentuk,
             warna=v.warna, ukuran=v.ukuran, sku=v.sku, harga=p.harga, jumlah=i.jumlah,
         )
-        v.stok -= i.jumlah
-        v.save(update_fields=["stok"])
 
     keranjang.item.all().delete()
     keranjang.voucher = None

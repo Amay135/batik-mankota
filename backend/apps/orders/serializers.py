@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from apps.catalog.serializers import boleh_stok_angka, status_stok, url_foto
+from apps.inventory.selectors import available_for_variant
 
 from .models import ItemKeranjang, ItemPesanan, Pesanan
 
@@ -17,11 +18,12 @@ class ItemKeranjangSerializer(serializers.ModelSerializer):
 
     def get_varian(self, o):
         v = o.varian
+        tersedia = available_for_variant(v)
         data = {"id": v.id, "sku": v.sku, "warna": v.warna, "ukuran": v.ukuran}
         if boleh_stok_angka(self.context.get("request")):
-            data["stok"] = v.stok
+            data["stok"] = tersedia
         else:
-            data["status_stok"] = status_stok(v.stok)
+            data["status_stok"] = status_stok(tersedia)
         return data
 
     def get_produk(self, o):
