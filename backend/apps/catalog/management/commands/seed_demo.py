@@ -6,6 +6,7 @@ from django.db import transaction
 
 from apps.accounts.models import User
 from apps.catalog.models import FotoProduk, Kategori, Motif, Produk, Varian
+from apps.inventory.services import add_stock
 from apps.orders.models import ItemKeranjang, Keranjang, Voucher
 
 KATEGORI = [
@@ -153,7 +154,7 @@ class Command(BaseCommand):
                     unggulan=idx < 6 or idx % 7 == 0, aktif=True,
                 ),
             )
-            produk.varian.all().delete()
+            # Jangan hapus varian: StockMovement memakai PROTECT. Seed memakai upsert.
             produk.foto.all().delete()
             lain = [w for w in WARNA if w != warna][: (2 if idx % 3 == 0 else 1)]
             warna_list = [warna, *lain]
@@ -163,7 +164,32 @@ class Command(BaseCommand):
                     if idx == 0 and w == "indigo" and u == "L":
                         stok = 24
                     sku = f"{prefix}-{nomor:03d}-{WARNA[w][1]}" + (f"-{u}" if punya_ukuran else "")
-                    Varian.objects.create(produk=produk, warna=w, ukuran=u, sku=sku, stok=stok)
+                    varian, dibuat = Varian.objects.get_or_create(
+                        sku=sku,
+                        defaults={
+                            "produk": produk,
+                            "warna": w,
+                            "ukuran": u,
+                            "stok": stok,
+                            "aktif": True,
+                        },
+                    )
+                    if dibuat:
+                        if stok:
+                            add_stock(
+                                varian.pk,
+                                stok,
+                                ref_type="seed_demo",
+                                note="Stok awal data contoh",
+                            )
+                    else:
+                        varian.produk = produk
+                        varian.warna = w
+                        varian.ukuran = u
+                        varian.aktif = True
+                        varian.save(
+                            update_fields=["produk", "warna", "ukuran", "aktif"]
+                        )
             for urutan, jenis in enumerate(["depan", "detail", "belakang", "model"]):
                 FotoProduk.objects.create(produk=produk, jenis=jenis, urutan=urutan)
 

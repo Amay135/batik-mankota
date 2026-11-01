@@ -92,7 +92,7 @@ npm run e2e            # Playwright (alur kasir & checkout)
 
 ## Aturan Wajib: Stok
 
-1. **Jangan pernah** mengubah `Stock.qty_on_hand` / `qty_reserved` langsung (`.save()`, `.update()`, `F()` di luar inventory). Gunakan **hanya** `backend/apps/inventory/services.py`: `reserve`, `release`, `consume`, `add_stock`, `adjust`.
+1. **Jangan pernah** mengubah `Stock.qty_on_hand` / `qty_reserved` langsung (`.save()`, `.update()`, `F()` di luar inventory). Gunakan **hanya** `backend/apps/inventory/services.py`: `reserve`, `release`, `consume_reserved`, `consume_direct`, `add_stock`, `adjust`.
 2. Setiap perubahan stok = satu baris `StockMovement` (append-only, tidak di-update/delete).
 3. Operasi stok dalam `transaction.atomic()` + `select_for_update()`, urutkan id agar bebas deadlock.
 4. Stok tersedia = `qty_on_hand − qty_reserved`.

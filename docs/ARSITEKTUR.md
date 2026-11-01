@@ -213,7 +213,7 @@ sequenceDiagram
     A-->>K: data varian (nama, harga, stok)
     K->>A: POST /kasir/transaksi/ (Idempotency-Key)
     A->>DB: BEGIN
-    A->>I: consume_stock(items, ref=order)
+    A->>I: consume_direct(items, ref=order)
     I->>DB: SELECT stock ... FOR UPDATE
     alt tersedia (on_hand - reserved) >= qty
         I->>DB: UPDATE stok + INSERT stockmovement(POS_OUT)
@@ -365,7 +365,7 @@ Setelah COMMIT, API katalog langsung menghitung `qty_on_hand − qty_reserved` d
 
 ## 10. Konkurensi dan Integritas Stok
 
-- Semua perubahan stok hanya lewat `inventory.services` (`reserve`, `release`, `consume`, `add_stock`, `adjust`).
+- Semua perubahan stok hanya lewat `inventory.services` (`reserve`, `release`, `consume_reserved`, `consume_direct`, `add_stock`, `adjust`).
 - `Stock.objects.select_for_update().filter(variant_id__in=...)` dengan urutan id tetap (hindari deadlock).
 - Constraint `CHECK` di tabel stok sebagai jaring pengaman terakhir.
 - `idempotency_key` unik di order mencegah dobel submit.

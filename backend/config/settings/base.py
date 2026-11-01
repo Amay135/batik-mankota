@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     "apps.audit",
     "apps.catalog",
     "apps.orders",
+    "apps.inventory",
 ]
 
 MIDDLEWARE = [
@@ -140,3 +141,4 @@ SPECTACULAR_SETTINGS = {
 ONGKIR_FLAT = 25000
 GRATIS_ONGKIR_MIN = 750000
 BATAS_BAYAR_JAM = 24
+BATAS_RESERVASI_MENIT = 60
