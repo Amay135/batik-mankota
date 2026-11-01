@@ -111,8 +111,6 @@ class Varian(models.Model):
     warna = models.CharField(max_length=10, choices=Produk.Warna.choices)
     ukuran = models.CharField(max_length=3, choices=Ukuran.choices)
     sku = models.CharField(max_length=40, unique=True)
-    # Sementara stok disimpan di sini; modul inventory kelak menjadi sumber tunggal.
-    stok = models.PositiveIntegerField(default=0)
     harga_beli = models.PositiveIntegerField(
         default=0, help_text="Harga beli/HPP, Rupiah tanpa desimal; hanya untuk admin"
     )

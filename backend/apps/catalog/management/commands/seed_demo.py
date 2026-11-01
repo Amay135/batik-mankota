@@ -170,7 +170,6 @@ class Command(BaseCommand):
                             "produk": produk,
                             "warna": w,
                             "ukuran": u,
-                            "stok": stok,
                             "aktif": True,
                         },
                     )

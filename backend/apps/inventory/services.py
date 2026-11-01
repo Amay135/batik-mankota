@@ -139,7 +139,13 @@ def consume_reserved(
 
 @transaction.atomic
 def consume_direct(
-    items, *, ref_type: str, ref_id, actor=None, note: str = ""
+    items,
+    *,
+    ref_type: str,
+    ref_id,
+    actor=None,
+    note: str = "",
+    movement_type: str = StockMovement.Type.POS_OUT,
 ) -> list[StockMovement]:
     jumlah = _gabung_items(items)
     if not jumlah:
@@ -161,7 +167,7 @@ def consume_direct(
         movements.append(
             StockMovement.objects.create(
                 variant_id=variant_id,
-                type=StockMovement.Type.POS_OUT,
+                type=movement_type,
                 qty_delta=-qty,
                 ref_type=ref_type,
                 ref_id=ref_id,

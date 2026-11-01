@@ -1,4 +1,4 @@
-from django.db.models import Count, Exists, Max, Min, OuterRef, Q
+from django.db.models import Count, Exists, Max, Min, OuterRef, Prefetch, Q
 from django.db.models.deletion import ProtectedError
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
@@ -16,6 +16,7 @@ from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsAdmin
 from apps.accounts.services import client_ip
+from apps.inventory.selectors import available_stocks
 
 from . import services
 from .models import FotoProduk, Kategori, Motif, Produk, Varian
@@ -90,11 +91,9 @@ class ProdukListView(ListAPIView):
 
         ukuran, warna = p.getlist("ukuran"), p.getlist("warna")
         if ukuran or warna:
-            v = Varian.objects.filter(produk=OuterRef("pk"), stok__gt=0)
-            if ukuran:
-                v = v.filter(ukuran__in=ukuran)
-            if warna:
-                v = v.filter(warna__in=warna)
+            v = available_stocks(ukuran=ukuran, warna=warna).filter(
+                variant__produk=OuterRef("pk")
+            )
             qs = qs.filter(Exists(v))
 
         return qs.order_by(*URUTAN.get(p.get("urut", "populer"), URUTAN["populer"]))
@@ -133,7 +132,10 @@ class ProdukDetailView(RetrieveAPIView):
         return (
             produk_aktif()
             .select_related("kategori", "motif")
-            .prefetch_related("foto", "varian")
+            .prefetch_related(
+                "foto",
+                Prefetch("varian", queryset=Varian.objects.select_related("stock")),
+            )
         )
 
 
@@ -184,7 +186,7 @@ class MotifAdminDetailView(RetrieveUpdateDestroyAPIView):
 
 def _produk_admin():
     return Produk.objects.select_related("kategori", "motif").prefetch_related(
-        "varian", "foto"
+        Prefetch("varian", queryset=Varian.objects.select_related("stock")), "foto"
     )
 
 
@@ -220,7 +222,11 @@ class VarianAdminListCreateView(ListCreateAPIView):
     serializer_class = VarianAdminSerializer
 
     def get_queryset(self):
-        return Varian.objects.filter(produk_id=self.kwargs["pk"]).order_by("id")
+        return (
+            Varian.objects.filter(produk_id=self.kwargs["pk"])
+            .select_related("stock")
+            .order_by("id")
+        )
 
     def perform_create(self, serializer):
         serializer.save(produk=get_object_or_404(Produk, pk=self.kwargs["pk"]))
@@ -228,7 +234,7 @@ class VarianAdminListCreateView(ListCreateAPIView):
 
 class VarianAdminDetailView(RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAdmin]
-    queryset = Varian.objects.select_related("produk")
+    queryset = Varian.objects.select_related("produk", "stock")
     serializer_class = VarianAdminSerializer
 
     def perform_update(self, serializer):
