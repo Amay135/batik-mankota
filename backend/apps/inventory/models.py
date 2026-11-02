@@ -113,3 +113,50 @@ class StockReservation(models.Model):
 
     def __str__(self):
         return f"{self.order_ref} {self.variant.sku} x{self.qty}"
+
+
+class StockOpname(models.Model):
+    class Status(models.TextChoices):
+        DRAFT = "DRAFT", "Draf"
+        APPLIED = "APPLIED", "Diterapkan"
+
+    status = models.CharField(
+        max_length=10, choices=Status.choices, default=Status.DRAFT
+    )
+    note = models.CharField(max_length=255)
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="stock_opnames",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    applied_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        verbose_name_plural = "stok opname"
+
+    def __str__(self):
+        return f"Opname #{self.pk}"
+
+
+class StockOpnameItem(models.Model):
+    opname = models.ForeignKey(
+        StockOpname, on_delete=models.CASCADE, related_name="items"
+    )
+    variant = models.ForeignKey(
+        "catalog.Varian", on_delete=models.PROTECT, related_name="opname_items"
+    )
+    system_qty = models.PositiveIntegerField()
+    counted_qty = models.PositiveIntegerField()
+
+    class Meta:
+        ordering = ["variant_id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["opname", "variant"], name="opname_item_unik"
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.opname_id} {self.variant.sku}"
