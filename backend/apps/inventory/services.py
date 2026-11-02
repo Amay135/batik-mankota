@@ -7,8 +7,8 @@ from django.utils import timezone
 from apps.audit.models import AuditLog
 from apps.audit.services import catat
 
-from .exceptions import InsufficientStock
-from .models import Stock, StockMovement, StockReservation
+from .exceptions import InsufficientStock, OpnameSudahDiterapkan
+from .models import Stock, StockMovement, StockOpname, StockOpnameItem, StockReservation
 
 
 def _validasi_qty(qty: int) -> None:
@@ -213,6 +213,8 @@ def adjust(
     actor,
     note: str = "",
     type=StockMovement.Type.ADJUST,
+    ref_type: str = "adjust",
+    ref_id="",
 ) -> StockMovement:
     if not isinstance(qty_delta, int) or qty_delta == 0:
         raise ValueError("Perubahan stok harus bilangan bulat dan tidak nol.")
@@ -237,7 +239,8 @@ def adjust(
         variant_id=vid,
         type=type,
         qty_delta=qty_delta,
-        ref_type="adjust",
+        ref_type=ref_type,
+        ref_id=ref_id,
         actor=actor,
         note=note,
     )
@@ -250,3 +253,95 @@ def adjust(
         after={"qty_on_hand": sesudah},
     )
     return movement
+
+
+@transaction.atomic
+def ubah_min_stock(variant_id: int, min_stock: int, *, actor, note: str) -> Stock:
+    """Ubah ambang stok minimum; qty tidak berubah sehingga tidak menulis ledger."""
+    if not isinstance(min_stock, int) or min_stock < 0:
+        raise ValueError("Stok minimum harus bilangan bulat tidak negatif.")
+    if actor is None:
+        raise ValueError("Actor wajib diisi untuk ubah stok minimum.")
+    if not note.strip():
+        raise ValueError("Alasan ubah stok minimum wajib diisi.")
+
+    vid = int(variant_id)
+    stock = _lock_stocks([vid])[vid]
+    sebelum = stock.min_stock
+    stock.min_stock = min_stock
+    stock.version += 1
+    stock.save(update_fields=["min_stock", "version"])
+    catat(
+        actor=actor,
+        action=AuditLog.Action.MIN_STOCK_CHANGE,
+        entity="stock",
+        entity_id=vid,
+        before={"min_stock": sebelum},
+        after={"min_stock": min_stock},
+    )
+    return stock
+
+
+@transaction.atomic
+def buat_opname(items, *, actor, note: str) -> StockOpname:
+    """Simpan sesi opname dengan snapshot qty_on_hand saat ini."""
+    if actor is None:
+        raise ValueError("Actor wajib diisi untuk opname.")
+    if not note.strip():
+        raise ValueError("Catatan opname wajib diisi.")
+
+    daftar = [(int(variant_id), qty) for variant_id, qty in items]
+    if not daftar:
+        raise ValueError("Opname membutuhkan minimal satu varian.")
+    for _, qty in daftar:
+        if not isinstance(qty, int) or qty < 0:
+            raise ValueError("Hitungan fisik harus bilangan bulat tidak negatif.")
+    ids = [variant_id for variant_id, _ in daftar]
+    if len(ids) != len(set(ids)):
+        raise ValueError("Varian opname tidak boleh duplikat.")
+
+    stocks = _lock_stocks(ids)
+    opname = StockOpname.objects.create(note=note.strip(), actor=actor)
+    StockOpnameItem.objects.bulk_create(
+        [
+            StockOpnameItem(
+                opname=opname,
+                variant_id=variant_id,
+                system_qty=stocks[variant_id].qty_on_hand,
+                counted_qty=qty,
+            )
+            for variant_id, qty in daftar
+        ]
+    )
+    return opname
+
+
+@transaction.atomic
+def terapkan_opname(opname_id: int, *, actor) -> StockOpname:
+    if actor is None:
+        raise ValueError("Actor wajib diisi untuk opname.")
+
+    opname = StockOpname.objects.select_for_update().get(pk=opname_id)
+    if opname.status != StockOpname.Status.DRAFT:
+        raise OpnameSudahDiterapkan()
+
+    # Delta terhadap snapshot (bukan set ke hitungan) agar perubahan stok setelah
+    # sesi dibuat, mis. penjualan, tetap dipertahankan secara aditif.
+    for item in opname.items.order_by("variant_id"):
+        delta = item.counted_qty - item.system_qty
+        if delta == 0:
+            continue
+        adjust(
+            item.variant_id,
+            delta,
+            actor=actor,
+            note=f"Opname #{opname.pk}: {opname.note}"[:255],
+            type=StockMovement.Type.OPNAME,
+            ref_type="opname",
+            ref_id=opname.pk,
+        )
+
+    opname.status = StockOpname.Status.APPLIED
+    opname.applied_at = timezone.now()
+    opname.save(update_fields=["status", "applied_at"])
+    return opname

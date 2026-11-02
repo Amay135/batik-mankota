@@ -6,6 +6,7 @@ class AuditLog(models.Model):
     class Action(models.TextChoices):
         PRICE_CHANGE = "price_change", "Ubah harga"
         STOCK_ADJUST = "stock_adjust", "Penyesuaian stok"
+        MIN_STOCK_CHANGE = "min_stock_change", "Ubah stok minimum"
         VOID_RETURN = "void_return", "Void/retur"
         ROLE_CHANGE = "role_change", "Ubah role"
         ADMIN_LOGIN = "admin_login", "Login admin"

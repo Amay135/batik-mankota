@@ -117,3 +117,75 @@ ADMIN_CAPABILITIES += [
     *_katalog("varian/<int:pk>/", ("GET", "PUT", "PATCH", "DELETE")),
     *_katalog("foto/<int:pk>/", ("DELETE",)),
 ]
+
+
+def _stok(path, method, *, id_, rujukan, roles):
+    return {
+        "id": id_,
+        "rujukan": rujukan,
+        "fase": 1,
+        "method": method,
+        "path": f"/api/v1/stok/{path}",
+        "roles": roles,
+        "requires_2fa": True,
+    }
+
+
+ADMIN_CAPABILITIES += [
+    _stok(
+        "",
+        "GET",
+        id_="ADM-12",
+        rujukan="PRD F-INV-03; F-INV-05",
+        roles=("admin", "kasir"),
+    ),
+    _stok(
+        "mutasi/",
+        "GET",
+        id_="ADM-12",
+        rujukan="PRD F-INV-03",
+        roles=("admin",),
+    ),
+    _stok(
+        "penyesuaian/",
+        "POST",
+        id_="ADM-12",
+        rujukan="PRD F-INV-03; F-INV-04",
+        roles=("admin",),
+    ),
+    _stok(
+        "opname/",
+        "POST",
+        id_="ADM-13",
+        rujukan="PRD F-INV-04",
+        roles=("admin",),
+    ),
+    _stok(
+        "opname/<int:pk>/",
+        "GET",
+        id_="ADM-13",
+        rujukan="PRD F-INV-04",
+        roles=("admin",),
+    ),
+    _stok(
+        "opname/<int:pk>/terapkan/",
+        "POST",
+        id_="ADM-13",
+        rujukan="PRD F-INV-04",
+        roles=("admin",),
+    ),
+    _stok(
+        "menipis/",
+        "GET",
+        id_="ADM-14",
+        rujukan="PRD F-INV-05",
+        roles=("admin", "kasir"),
+    ),
+    _stok(
+        "<int:pk>/minimum/",
+        "PATCH",
+        id_="ADM-14",
+        rujukan="PRD F-INV-05",
+        roles=("admin",),
+    ),
+]

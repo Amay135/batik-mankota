@@ -183,6 +183,8 @@ erDiagram
 | `inventory_stock` | variant_id (PK), **qty_on_hand**, **qty_reserved**, min_stock, version — `CHECK (qty_on_hand >= 0 AND qty_reserved >= 0 AND qty_reserved <= qty_on_hand)` |
 | `inventory_stockmovement` | id, variant_id, type (`PURCHASE_IN`, `POS_OUT`, `ONLINE_OUT`, `RETURN_IN`, `ADJUST`, `OPNAME`), qty_delta (+/−), ref_type, ref_id, actor_id, note, created_at — **append-only** |
 | `inventory_stockreservation` | id, variant_id, order_id, qty, expires_at, status (`ACTIVE`/`CONSUMED`/`RELEASED`/`EXPIRED`) |
+| `inventory_stockopname` | id, status (`DRAFT`/`APPLIED`), note, actor_id, created_at, applied_at |
+| `inventory_stockopnameitem` | id, opname_id, variant_id, system_qty (snapshot), counted_qty, unik `(opname_id, variant_id)` |
 | `orders_order` | id, number, **channel** (`ONLINE`/`POS`), customer_id (nullable), cashier_id (nullable), shift_id, status, subtotal, discount, shipping_fee, total, idempotency_key (unik), created_at |
 | `orders_orderitem` | order_id, variant_id, qty, unit_price, unit_cost (snapshot HPP), discount |
 | `orders_payment` | order_id, method, amount, status, gateway_ref, paid_at |
@@ -281,7 +283,7 @@ Setelah COMMIT, API katalog langsung menghitung `qty_on_hand − qty_reserved` d
 | Keranjang & pesanan | `GET /keranjang/`, `POST /keranjang/item/`, `PATCH/DELETE /keranjang/item/{id}/`, `POST/DELETE /keranjang/voucher/`; `GET/POST /pesanan/`, `GET /pesanan/{nomor}/` | user (milik sendiri) | sudah ada |
 | Pembayaran | `POST /pembayaran/webhook/` | gateway (signature) | rencana |
 | Kasir (POS) | `GET /kasir/varian/`, `GET /kasir/varian/{qr_token}/`, `POST /kasir/shift/`, `POST /kasir/transaksi/`, `POST /kasir/transaksi/{nomor}/batal/`, `POST /kasir/retur/` | kasir, admin | rencana |
-| Stok | `GET /stok/`, `GET /stok/mutasi/`, `POST /stok/penyesuaian/`, `POST /stok/opname/` | kasir (baca), admin | rencana |
+| Stok | `GET /stok/`, `GET /stok/menipis/`, `GET /stok/mutasi/`; `POST /stok/penyesuaian/`, `POST /stok/opname/`; `GET /stok/opname/{id}/`, `POST /stok/opname/{id}/terapkan/`; `PATCH /stok/{varian_id}/minimum/` | kasir (stok & menipis), admin (+2FA) | sudah ada |
 | Pengadaan | `/pengadaan/pemasok/`, `/pengadaan/pesanan/`, `/pengadaan/penerimaan/` | admin | rencana |
 | Keuangan & laporan | `/keuangan/rekening/`, `/keuangan/pengeluaran/`, `/keuangan/hutang/`; `/laporan/penjualan/`, `/laporan/laba-rugi/`, `/laporan/nilai-stok/`, `/laporan/{nama}/ekspor/` | admin | rencana |
 | Pelanggan (CRM) | `/pelanggan/`, `/pelanggan/{id}/`, `/pelanggan/{id}/poin/`, `/pelanggan/voucher/` | admin; kasir (cari/daftar) | rencana |
@@ -372,6 +374,7 @@ Setelah COMMIT, API katalog langsung menghitung `qty_on_hand − qty_reserved` d
 - Ledger `StockMovement` tanpa `UPDATE`/`DELETE`.
 - Uji wajib: 50 thread membeli SKU berstok 10 → tepat 10 berhasil, stok akhir 0.
 - Rekonsiliasi harian: `SUM(qty_delta)` ledger = `qty_on_hand`; selisih memicu alert.
+- Opname menyimpan snapshot `qty_on_hand` saat sesi dibuat; selisih = hitungan fisik − snapshot dan diterapkan sebagai **delta** (bukan set ke hitungan), sehingga perubahan stok setelah sesi dibuat (mis. penjualan) tetap dipertahankan. Penerapan ditolak `409` bila hasilnya negatif atau di bawah `qty_reserved`.
 
 ---
 
