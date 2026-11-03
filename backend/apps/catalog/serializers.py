@@ -149,6 +149,15 @@ class ProdukDetailSerializer(ProdukListSerializer):
         )
         return ProdukListSerializer(qs, many=True, context=self.context).data
 
+class ProdukDetailTamuSerializer(ProdukListSerializer):
+    foto = FotoSerializer(many=True, read_only=True)
+
+    class Meta(ProdukListSerializer.Meta):
+        fields = [
+            *ProdukListSerializer.Meta.fields,
+            "deskripsi",
+            "foto",
+        ]
 
 # --- Serializer admin: hanya dipakai endpoint IsAdmin, boleh memuat harga_beli. ---
 

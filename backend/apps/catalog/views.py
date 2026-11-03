@@ -11,6 +11,7 @@ from rest_framework.generics import (
     RetrieveUpdateDestroyAPIView,
 )
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -28,6 +29,7 @@ from .serializers import (
     MotifAdminSerializer,
     ProdukAdminSerializer,
     ProdukDetailSerializer,
+    ProdukDetailTamuSerializer,
     ProdukListSerializer,
     UnggahFotoSerializer,
     VarianAdminSerializer,
@@ -65,6 +67,7 @@ def produk_aktif():
 
 
 class ProdukListView(ListAPIView):
+    permission_classes = [AllowAny]
     serializer_class = ProdukListSerializer
     pagination_class = KatalogPagination
 
@@ -115,6 +118,7 @@ class ProdukListView(ListAPIView):
 
 
 class KategoriListView(APIView):
+    permission_classes = [AllowAny]
     @extend_schema(responses=DaftarKategoriSerializer)
     def get(self, request):
         qs = Kategori.objects.annotate(
@@ -125,8 +129,13 @@ class KategoriListView(APIView):
 
 
 class ProdukDetailView(RetrieveAPIView):
-    serializer_class = ProdukDetailSerializer
+    permission_classes = [AllowAny]
     lookup_field = "slug"
+
+    def get_serializer_class(self):
+        if self.request.user and self.request.user.is_authenticated:
+            return ProdukDetailSerializer
+        return ProdukDetailTamuSerializer
 
     def get_queryset(self):
         return (
