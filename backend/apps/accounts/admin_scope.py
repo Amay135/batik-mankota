@@ -189,3 +189,23 @@ ADMIN_CAPABILITIES += [
         roles=("admin",),
     ),
 ]
+
+
+def _label_qr(path, method, *, roles):
+    # ADM-11 = Label QR (PRD F-INV-02; ARSITEKTUR 6.5), termasuk lookup hasil scan.
+    return {
+        "id": "ADM-11",
+        "rujukan": "PRD F-INV-02; ARSITEKTUR 6.5",
+        "fase": 1,
+        "method": method,
+        "path": path,
+        "roles": roles,
+        "requires_2fa": True,
+    }
+
+
+ADMIN_CAPABILITIES += [
+    _label_qr("/api/v1/katalog/varian/<int:pk>/qr/", "GET", roles=("admin",)),
+    _label_qr("/api/v1/katalog/label/", "POST", roles=("admin",)),
+    _label_qr("/api/v1/kasir/varian/<str:token>/", "GET", roles=("admin", "kasir")),
+]

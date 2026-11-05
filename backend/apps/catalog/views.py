@@ -1,6 +1,8 @@
 from django.db.models import Count, Exists, Max, Min, OuterRef, Prefetch, Q
 from django.db.models.deletion import ProtectedError
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.generics import (
@@ -10,22 +12,27 @@ from rest_framework.generics import (
     RetrieveAPIView,
     RetrieveUpdateDestroyAPIView,
 )
+
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny
+from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsAdmin
+from apps.accounts.serializers import GalatSerializer
 from apps.accounts.services import client_ip
 from apps.inventory.selectors import available_stocks
 
 from . import services
 from .models import FotoProduk, Kategori, Motif, Produk, Varian
+from .qr import qr_png, qr_svg, render_label_pdf
 from .serializers import (
     DaftarKategoriSerializer,
     FotoAdminSerializer,
     KategoriAdminSerializer,
     KategoriSerializer,
+    LabelCetakSerializer,
     MotifAdminSerializer,
     ProdukAdminSerializer,
     ProdukDetailSerializer,
@@ -119,6 +126,7 @@ class ProdukListView(ListAPIView):
 
 class KategoriListView(APIView):
     permission_classes = [AllowAny]
+
     @extend_schema(responses=DaftarKategoriSerializer)
     def get(self, request):
         qs = Kategori.objects.annotate(
@@ -286,3 +294,64 @@ class FotoAdminDetailView(DestroyAPIView):
     permission_classes = [IsAdmin]
     queryset = FotoProduk.objects.all()
     serializer_class = FotoAdminSerializer
+
+
+class QrGambarView(APIView):
+    permission_classes = [IsAdmin]
+
+    def perform_content_negotiation(self, request, force=False):
+        # ?format di sini memilih SVG/PNG, bukan format renderer DRF (yang hanya JSON).
+        return (JSONRenderer(), "json")
+
+    @extend_schema(
+        responses={
+            (200, "image/svg+xml"): OpenApiTypes.BINARY,
+            (200, "image/png"): OpenApiTypes.BINARY,
+            400: GalatSerializer,
+            404: GalatSerializer,
+        }
+    )
+    def get(self, request, pk):
+        varian = get_object_or_404(Varian, pk=pk)
+        gambar_format = request.query_params.get("format", "svg")
+        if gambar_format == "svg":
+            return HttpResponse(qr_svg(varian), content_type="image/svg+xml")
+        if gambar_format == "png":
+            return HttpResponse(qr_png(varian), content_type="image/png")
+        return Response(
+            {
+                "code": "FORMAT_TIDAK_DIDUKUNG",
+                "message": "Format gambar harus svg atau png.",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+
+class LabelCetakView(APIView):
+    permission_classes = [IsAdmin]
+
+    @extend_schema(
+        request=LabelCetakSerializer,
+        responses={
+            (200, "application/pdf"): OpenApiTypes.BINARY,
+            400: GalatSerializer,
+        },
+    )
+    def post(self, request):
+        data = LabelCetakSerializer(data=request.data)
+        data.is_valid(raise_exception=True)
+
+        items = [
+            (item["id"], item["salinan"])
+            for item in data.validated_data.get("varian", [])
+        ]
+        if produk := data.validated_data.get("produk"):
+            items += [
+                (varian, data.validated_data["salinan"])
+                for varian in produk.varian.filter(aktif=True).order_by("id")
+            ]
+
+        pdf = render_label_pdf(ukuran=data.validated_data["ukuran"], items=items)
+        response = HttpResponse(pdf, content_type="application/pdf")
+        response["Content-Disposition"] = 'attachment; filename="label.pdf"'
+        return response

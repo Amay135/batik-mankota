@@ -96,6 +96,9 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# Origin publik frontend; dipakai untuk isi QR (/q/<qr_token>).
+SITE_URL = os.environ.get("SITE_URL", "http://localhost:3000")
+
 # Frontend memanggil API lewat proxy Next.js (same-origin), jadi cookie sesi
 # dan CSRF berlaku normal. CORS tetap disiapkan untuk akses langsung.
 CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS", "http://localhost:3000")

@@ -4,6 +4,7 @@ from rest_framework import serializers
 from apps.inventory.selectors import available_for_variant
 
 from .models import FotoProduk, Kategori, Motif, Produk, Varian
+from .qr import BATAS_HALAMAN, UKURAN_LABEL
 
 AMBANG_STOK_SEDIKIT = 5
 
@@ -250,6 +251,35 @@ class ProdukAdminSerializer(serializers.ModelSerializer):
             "foto",
         ]
         read_only_fields = ["rating", "jumlah_ulasan", "terjual", "dibuat"]
+
+
+class LabelItemSerializer(serializers.Serializer):
+    # Varian nonaktif tidak boleh dicetak ulang labelnya.
+    id = serializers.PrimaryKeyRelatedField(queryset=Varian.objects.filter(aktif=True))
+    salinan = serializers.IntegerField(min_value=1, max_value=100, default=1)
+
+
+class LabelCetakSerializer(serializers.Serializer):
+    ukuran = serializers.ChoiceField(choices=list(UKURAN_LABEL), default="40x30")
+    varian = LabelItemSerializer(many=True, required=False)
+    produk = serializers.PrimaryKeyRelatedField(
+        queryset=Produk.objects.all(), required=False
+    )
+    salinan = serializers.IntegerField(min_value=1, max_value=100, default=1)
+
+    def validate(self, attrs):
+        if not attrs.get("varian") and not attrs.get("produk"):
+            raise serializers.ValidationError(
+                {"varian": ["Pilih varian atau produk yang akan dicetak."]}
+            )
+        total = sum(item["salinan"] for item in attrs.get("varian", []))
+        if produk := attrs.get("produk"):
+            total += produk.varian.filter(aktif=True).count() * attrs["salinan"]
+        if total > BATAS_HALAMAN:
+            raise serializers.ValidationError(
+                {"varian": [f"Maksimal {BATAS_HALAMAN} label per cetak."]}
+            )
+        return attrs
 
 
 class UnggahFotoSerializer(serializers.Serializer):

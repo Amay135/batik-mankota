@@ -17,4 +17,6 @@ urlpatterns = [
     path("kelola/produk/<int:pk>/foto/", views.FotoAdminCreateView.as_view()),
     path("kelola/varian/<int:pk>/", views.VarianAdminDetailView.as_view()),
     path("kelola/foto/<int:pk>/", views.FotoAdminDetailView.as_view()),
+    path("varian/<int:pk>/qr/", views.QrGambarView.as_view()),
+    path("label/", views.LabelCetakView.as_view()),
 ]
