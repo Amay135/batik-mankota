@@ -33,7 +33,7 @@ Versi: 1.1 (rencana B: backend dan frontend terpisah) · Pendamping `docs/PRD.md
 | Tugas latar | **Celery + Redis** | Kadaluarsa reservasi, email, laporan, revalidasi cache frontend |
 | Cache / throttle | Redis | Rate limit, cache |
 | QR code | `qrcode` + `Pillow` | Generate SVG/PNG |
-| Laporan | `openpyxl` (Excel), `WeasyPrint` (PDF) | Ekspor |
+| Laporan | `openpyxl` (Excel), `ReportLab` (PDF) | Ekspor |
 | Pengujian | `pytest-django`, `factory_boy` | Alur stok dan izin wajib teruji |
 
 ### Frontend (`frontend/`)
@@ -279,7 +279,7 @@ Setelah COMMIT, API katalog langsung menghitung `qty_on_hand − qty_reserved` d
 | Akun (admin) | `GET/POST /auth/akun/`, `GET/PATCH /auth/akun/{id}/`, `POST /auth/akun/{id}/reset-password/`, `/auth/akun/{id}/reset-2fa/` | admin (+2FA) | sudah ada |
 | Katalog | `GET /katalog/kategori/`, `GET /katalog/produk/`, `GET /katalog/produk/{slug}/` | tamu (ringkas), login (penuh) | sudah ada |
 | Katalog (kelola) | `GET/POST /katalog/kelola/kategori/` dan `/{id}/`; idem `/motif/`; `GET/POST /katalog/kelola/produk/` dan `/{id}/`; `GET/POST /katalog/kelola/produk/{id}/varian/`; `POST /katalog/kelola/produk/{id}/foto/`; `GET/PUT/PATCH/DELETE /katalog/kelola/varian/{id}/`; `DELETE /katalog/kelola/foto/{id}/` | admin (+2FA) | sudah ada |
-| Katalog (QR) | `GET /katalog/varian/{id}/qr/`, `POST /katalog/label/` | admin | rencana |
+| Katalog (QR) | `GET /katalog/varian/{id}/qr/`, `POST /katalog/label/` | admin | sudah ada |
 | Keranjang & pesanan | `GET /keranjang/`, `POST /keranjang/item/`, `PATCH/DELETE /keranjang/item/{id}/`, `POST/DELETE /keranjang/voucher/`; `GET/POST /pesanan/`, `GET /pesanan/{nomor}/` | user (milik sendiri) | sudah ada |
 | Pembayaran | `POST /pembayaran/webhook/` | gateway (signature) | rencana |
 | Kasir (POS) | `GET /kasir/varian/`, `GET /kasir/varian/{qr_token}/`, `POST /kasir/shift/`, `POST /kasir/transaksi/`, `POST /kasir/transaksi/{nomor}/batal/`, `POST /kasir/retur/` | kasir, admin | rencana |
@@ -407,7 +407,7 @@ Lingkungan: dev (lokal) · staging · prod
 - Admin pertama dibuat sekali dengan `python manage.py buat_admin`; Django admin tidak di-deploy.
 
 **Variabel lingkungan**
-- `backend`: `DATABASE_URL`, `REDIS_URL` (wajib di produksi untuk throttle/lockout), `SECRET_KEY`, `ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS`, `CSRF_TRUSTED_ORIGINS` (wajib, https), `COOKIE_DOMAIN`, `MIDTRANS_*`/`XENDIT_*`, `EMAIL_*`, `STORAGE_*`, `WEB_REVALIDATE_URL`, `REVALIDATE_SECRET`, `SENTRY_DSN`.
+- `backend`: `DATABASE_URL`, `REDIS_URL` (wajib di produksi untuk throttle/lockout), `SECRET_KEY`, `ALLOWED_HOSTS`, `SITE_URL` (origin publik untuk isi QR; wajib https di produksi), `CORS_ALLOWED_ORIGINS`, `CSRF_TRUSTED_ORIGINS` (wajib, https), `COOKIE_DOMAIN`, `MIDTRANS_*`/`XENDIT_*`, `EMAIL_*`, `STORAGE_*`, `WEB_REVALIDATE_URL`, `REVALIDATE_SECRET`, `SENTRY_DSN`.
 - `frontend`: `NEXT_PUBLIC_API_URL` (browser), `API_INTERNAL_URL` (server-ke-server), `REVALIDATE_SECRET`, `NEXT_PUBLIC_SITE_URL`, `SENTRY_DSN`.
 
 ---

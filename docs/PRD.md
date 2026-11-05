@@ -162,7 +162,7 @@ Hanya **3 role**. Pengunjung yang belum login bukan role, hanya status "tamu".
 
 ## 6. QR Code Produk
 
-- Isi QR: URL pendek `https://<domain>/q/<sku>` (atau token SKU).
+- Isi QR: URL pendek `https://<domain>/q/<qr_token>` (token permanen per varian; lookup juga menerima SKU mentah).
 - **Di kasir:** scan menghasilkan lookup SKU → tambah ke keranjang POS.
 - **Di luar kasir (pelanggan scan):** membuka halaman produk; tamu diarahkan melihat ringkasan dan ajakan login.
 - Cetak label: nama, SKU, ukuran, harga, QR; cetak massal dari penerimaan barang atau daftar produk.
