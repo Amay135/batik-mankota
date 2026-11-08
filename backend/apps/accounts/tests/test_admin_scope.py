@@ -5,6 +5,7 @@ import pytest
 from django.contrib.sessions.models import Session
 from django.core.cache import cache
 from django.urls import URLPattern, URLResolver, get_resolver
+from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.accounts import totp
@@ -17,6 +18,9 @@ from apps.accounts.permissions import (
     IsKasirOrAdmin,
 )
 from apps.audit.models import AuditLog
+from apps.catalog.models import Kategori, Motif, Produk, Ulasan, Varian
+from apps.inventory.services import add_stock
+from apps.orders.models import ItemKeranjang, ItemPesanan, Keranjang, Pesanan
 
 FASE_SAAT_INI = 1
 PASSWORD = "rahasia-kuat-1"
@@ -122,6 +126,30 @@ def user(db):
     )
 
 
+@pytest.fixture
+def produk_varian(db):
+    kategori = Kategori.objects.create(nama="Pria", slug="pria", label_pendek="Pria")
+    motif = Motif.objects.create(nama="Parang", slug="parang")
+    produk = Produk.objects.create(
+        nama="Kemeja",
+        slug="kemeja",
+        kategori=kategori,
+        teknik="cap",
+        motif=motif,
+        bentuk="kemeja",
+        warna_utama="indigo",
+        harga=365_000,
+    )
+    varian = Varian.objects.create(
+        produk=produk,
+        warna="indigo",
+        ukuran="L",
+        sku="SKU-1",
+        harga_beli=200_000,
+    )
+    return produk, varian
+
+
 def test_registry_matches_urlconf():
     admin_routes = {
         (path, method)
@@ -150,6 +178,13 @@ def test_registry_id_memakai_kategori_sah():
     pola = re.compile(r"^(ADM|SEC)-\d{2}$")
     for entry in ADMIN_CAPABILITIES:
         assert pola.fullmatch(entry["id"]), entry
+
+
+def test_registry_memuat_semua_adm_fase_1():
+    ids = {
+        entry["id"] for entry in ADMIN_CAPABILITIES if entry["fase"] <= FASE_SAAT_INI
+    }
+    assert {f"ADM-{nomor}" for nomor in range(10, 17)} <= ids
 
 
 def test_admin_routes_permission_matrix(admin, kasir, user):
@@ -470,46 +505,291 @@ def test_customer_endpoints_reject_admin_kasir(admin, kasir):
             client.patch("/api/v1/keranjang/item/1/", {}, format="json").status_code
             == 403
         )
+        assert client.delete("/api/v1/keranjang/item/1/").status_code == 403
         assert (
             client.post("/api/v1/keranjang/voucher/", {}, format="json").status_code
             == 403
         )
+        assert client.delete("/api/v1/keranjang/voucher/").status_code == 403
         assert client.get("/api/v1/pesanan/").status_code == 403
+        assert client.post("/api/v1/pesanan/", {}, format="json").status_code == 403
         assert client.get("/api/v1/pesanan/MK-XXX/").status_code == 403
+        assert (
+            client.post(
+                "/api/v1/katalog/produk/kemeja/ulasan/", {}, format="json"
+            ).status_code
+            == 403
+        )
+        assert (
+            client.patch("/api/v1/katalog/ulasan/1/", {}, format="json").status_code
+            == 403
+        )
+        assert client.delete("/api/v1/katalog/ulasan/1/").status_code == 403
 
 
-def test_cost_price_hanya_untuk_admin(admin, kasir, user, db):
-    from apps.catalog.models import Kategori, Motif, Produk, Varian
+def test_cost_price_hanya_untuk_admin(admin, kasir, user, produk_varian):
+    produk, varian = produk_varian
+    admin_client = _verified(admin)
+    kasir_client = _login(kasir)
+    user_client = _login(user)
+    add_stock(varian.pk, 3)
 
-    kategori = Kategori.objects.create(nama="Pria", slug="pria", label_pendek="Pria")
-    motif = Motif.objects.create(nama="Parang", slug="parang")
-    produk = Produk.objects.create(
-        nama="Kemeja",
-        slug="kemeja",
-        kategori=kategori,
-        teknik="cap",
-        motif=motif,
-        bentuk="kemeja",
-        warna_utama="indigo",
-        harga=365_000,
-    )
-    Varian.objects.create(
-        produk=produk,
-        warna="indigo",
-        ukuran="L",
-        sku="SKU-1",
-        harga_beli=200_000,
-    )
+    # Satu-satunya tempat harga beli keluar: serializer kelola khusus admin.
+    for url in (
+        f"/api/v1/katalog/kelola/produk/{produk.pk}/",
+        f"/api/v1/katalog/kelola/varian/{varian.pk}/",
+    ):
+        body = admin_client.get(url).content
+        assert b'"harga_beli"' in body, url
+        assert b"200000" in body, url
 
-    admin_data = (
-        _verified(admin).get(f"/api/v1/katalog/kelola/produk/{produk.pk}/").json()
-    )
-    assert admin_data["varian"][0]["harga_beli"] == 200_000
+    # Endpoint katalog/stok/kasir tidak memuat harga beli, termasuk untuk admin.
+    for client in (admin_client, kasir_client):
+        for url in ("/api/v1/stok/", f"/api/v1/kasir/varian/{varian.sku}/"):
+            body = client.get(url).content
+            assert b"harga_beli" not in body, url
+            assert b"cost_price" not in body, url
 
-    for client in (_login(kasir), _login(user)):
+    for client in (kasir_client, user_client):
         body = client.get(f"/api/v1/katalog/produk/{produk.slug}/").content
         assert b"harga_beli" not in body
         assert b"cost_price" not in body
+
+    keranjang = Keranjang.objects.create(user=user)
+    ItemKeranjang.objects.create(keranjang=keranjang, varian=varian, jumlah=1)
+    assert b"harga_beli" not in user_client.get("/api/v1/keranjang/").content
+
+    pesanan = Pesanan.objects.create(
+        nomor="MK-UJI-ADM",
+        user=user,
+        nama_lengkap="Pelanggan",
+        whatsapp="081234567890",
+        email=user.email,
+        alamat="Jl. Uji 1",
+        provinsi="Jawa Tengah",
+        kota="Surakarta",
+        kecamatan="Laweyan",
+        kode_pos="57148",
+        subtotal=365_000,
+        ongkir=0,
+        total=365_000,
+        metode_bayar=Pesanan.Metode.TRANSFER,
+        bank="bca",
+        batas_bayar=timezone.now(),
+    )
+    ItemPesanan.objects.create(
+        pesanan=pesanan,
+        varian=varian,
+        nama=produk.nama,
+        slug=produk.slug,
+        motif=produk.motif.slug,
+        bentuk=produk.bentuk,
+        warna=varian.warna,
+        ukuran=varian.ukuran,
+        sku=varian.sku,
+        harga=produk.harga,
+        jumlah=1,
+    )
+    body = user_client.get(f"/api/v1/pesanan/{pesanan.nomor}/").content
+    assert b"harga_beli" not in body
+    assert b"cost_price" not in body
+
+
+def test_user_dan_tamu_tidak_menerima_angka_stok(produk_varian, user):
+    produk, varian = produk_varian
+    add_stock(varian.pk, 13)
+
+    data = _login(user).get(f"/api/v1/katalog/produk/{produk.slug}/").json()
+    item = next(v for v in data["varian"] if v["id"] == varian.pk)
+    assert item["status_stok"] == "Tersedia"
+    assert "stok" not in item
+
+    tamu = APIClient().get(f"/api/v1/katalog/produk/{produk.slug}/").content
+    assert b'"varian"' not in tamu
+
+    client = _login(user)
+    response = client.post(
+        "/api/v1/keranjang/item/",
+        {"varian_id": varian.pk, "jumlah": 999},
+        format="json",
+    )
+    assert response.status_code == 400
+    assert "13" not in response.content.decode()
+
+
+def test_admin_tanpa_2fa_hanya_melihat_status_stok(admin, kasir, user, produk_varian):
+    produk, varian = produk_varian
+    add_stock(varian.pk, 13)
+    url = f"/api/v1/katalog/produk/{produk.slug}/"
+
+    def lihat_varian(client):
+        response = client.get(url)
+        assert response.status_code == 200
+        return next(v for v in response.json()["varian"] if v["id"] == varian.pk)
+
+    belum_2fa = lihat_varian(_login(admin))
+    assert belum_2fa["status_stok"] == "Tersedia"
+    assert "stok" not in belum_2fa
+    assert "harga_beli" not in belum_2fa
+
+    sudah_2fa = lihat_varian(_verified(admin))
+    assert sudah_2fa["stok"] == 13
+    assert "status_stok" not in sudah_2fa
+
+    kasir_varian = lihat_varian(_login(kasir))
+    assert kasir_varian["stok"] == 13
+    assert "status_stok" not in kasir_varian
+
+    user_varian = lihat_varian(_login(user))
+    assert user_varian["status_stok"] == "Tersedia"
+    assert "stok" not in user_varian
+
+    tamu = APIClient().get(url).content
+    assert b'"varian"' not in tamu
+    assert b'"harga_beli"' not in tamu
+
+
+def test_tanpa_delete_untuk_ledger_audit_transaksi(admin, user, produk_varian):
+    admin_client = _verified(admin)
+    assert admin_client.delete("/api/v1/stok/").status_code == 405
+    assert admin_client.delete("/api/v1/stok/mutasi/").status_code == 405
+    assert admin_client.delete("/api/v1/stok/penyesuaian/").status_code == 405
+    assert admin_client.delete("/api/v1/audit/").status_code == 405
+    assert _login(user).delete("/api/v1/pesanan/MK-XXX/").status_code == 405
+
+
+def test_ubah_harga_produk_menulis_audit(admin, produk_varian):
+    produk, _ = produk_varian
+    response = _verified(admin).patch(
+        f"/api/v1/katalog/kelola/produk/{produk.pk}/",
+        {"harga": 400_000},
+        format="json",
+    )
+    assert response.status_code == 200, response.content
+
+    log = AuditLog.objects.get(
+        action=AuditLog.Action.PRICE_CHANGE,
+        entity="produk",
+        entity_id=str(produk.pk),
+    )
+    assert log.before == {"harga": 365_000}
+    assert log.after == {"harga": 400_000}
+
+
+def test_ubah_harga_beli_varian_menulis_audit(admin, produk_varian):
+    _, varian = produk_varian
+    response = _verified(admin).patch(
+        f"/api/v1/katalog/kelola/varian/{varian.pk}/",
+        {"harga_beli": 210_000},
+        format="json",
+    )
+    assert response.status_code == 200, response.content
+
+    log = AuditLog.objects.get(
+        action=AuditLog.Action.PRICE_CHANGE,
+        entity="varian",
+        entity_id=str(varian.pk),
+    )
+    assert log.before == {"harga_beli": 200_000}
+    assert log.after == {"harga_beli": 210_000}
+
+
+def test_penyesuaian_stok_menulis_audit(admin, produk_varian):
+    _, varian = produk_varian
+    add_stock(varian.pk, 10)
+    response = _verified(admin).post(
+        "/api/v1/stok/penyesuaian/",
+        {"varian_id": varian.pk, "qty_delta": -3, "alasan": "rusak"},
+        format="json",
+    )
+    assert response.status_code == 201, response.content
+
+    log = AuditLog.objects.get(action=AuditLog.Action.STOCK_ADJUST)
+    assert log.entity_id == str(varian.pk)
+    assert log.before == {"qty_on_hand": 10}
+    assert log.after == {"qty_on_hand": 7}
+
+
+def test_opname_diterapkan_menulis_audit(admin, produk_varian):
+    _, varian = produk_varian
+    add_stock(varian.pk, 10)
+    client = _verified(admin)
+    created = client.post(
+        "/api/v1/stok/opname/",
+        {"catatan": "hitung", "items": [{"varian_id": varian.pk, "qty_fisik": 8}]},
+        format="json",
+    )
+    assert created.status_code == 201, created.content
+    applied = client.post(f"/api/v1/stok/opname/{created.json()['id']}/terapkan/")
+    assert applied.status_code == 200, applied.content
+
+    log = AuditLog.objects.get(action=AuditLog.Action.STOCK_ADJUST)
+    assert log.before == {"qty_on_hand": 10}
+    assert log.after == {"qty_on_hand": 8}
+
+
+def test_ubah_stok_minimum_menulis_audit(admin, produk_varian):
+    _, varian = produk_varian
+    response = _verified(admin).patch(
+        f"/api/v1/stok/{varian.pk}/minimum/",
+        {"min_stock": 3, "alasan": "restock"},
+        format="json",
+    )
+    assert response.status_code == 200, response.content
+
+    log = AuditLog.objects.get(action=AuditLog.Action.MIN_STOCK_CHANGE)
+    assert log.before == {"min_stock": 5}
+    assert log.after == {"min_stock": 3}
+
+
+def test_moderasi_ulasan_menulis_audit(admin, produk_varian):
+    produk, _ = produk_varian
+    penulis = User.objects.create_user(
+        email="penulis@mankota.test",
+        password=PASSWORD,
+        nama_lengkap="Penulis",
+    )
+    ulasan = Ulasan.objects.create(produk=produk, user=penulis, rating=5)
+
+    response = _verified(admin).patch(
+        f"/api/v1/katalog/kelola/ulasan/{ulasan.pk}/",
+        {"tampil": False},
+        format="json",
+    )
+    assert response.status_code == 200, response.content
+
+    log = AuditLog.objects.get(action=AuditLog.Action.REVIEW_MODERATE)
+    assert log.entity_id == str(ulasan.pk)
+    assert log.before == {"tampil": True}
+    assert log.after == {"tampil": False}
+
+
+def test_panduan_ukuran_menulis_audit(admin, produk_varian):
+    produk, _ = produk_varian
+    client = _verified(admin)
+    tabel = [["Ukuran", "Lebar Dada"], ["L", "108"]]
+    tabel_baru = [["Ukuran", "Lebar Dada"], ["XL", "112"]]
+
+    created = client.post(
+        "/api/v1/katalog/kelola/panduan-ukuran/",
+        {"kategori": produk.kategori_id, "tabel": tabel},
+        format="json",
+    )
+    assert created.status_code == 201, created.content
+    detail = f"/api/v1/katalog/kelola/panduan-ukuran/{created.json()['id']}/"
+    assert client.patch(detail, {"tabel": tabel_baru}, format="json").status_code == 200
+    assert client.delete(detail).status_code == 204
+
+    logs = list(
+        AuditLog.objects.filter(action=AuditLog.Action.SIZE_GUIDE_CHANGE)
+        .order_by("id")
+        .values_list("before", "after")
+    )
+    assert logs == [
+        ({}, {"tabel": tabel}),
+        ({"tabel": tabel}, {"tabel": tabel_baru}),
+        ({"tabel": tabel_baru}, {}),
+    ]
 
 
 def test_django_admin_tidak_tersedia():

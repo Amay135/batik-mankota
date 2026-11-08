@@ -29,7 +29,7 @@ def _require_authenticated(request):
         raise GuestNotAllowed()
 
 
-def _admin_verified(request):
+def admin_verified(request):
     if not request.user.otp_enabled:
         return False
     if request.session.get(ADMIN_2FA_SESSION_KEY) != request.user.pk:
@@ -64,7 +64,7 @@ class IsAdmin(IsAdminBootstrap):
     message = "Hanya admin dengan 2FA terverifikasi yang dapat mengakses fitur ini."
 
     def has_permission(self, request, view):
-        return super().has_permission(request, view) and _admin_verified(request)
+        return super().has_permission(request, view) and admin_verified(request)
 
 
 class IsKasirOrAdmin(BasePermission):
@@ -74,7 +74,7 @@ class IsKasirOrAdmin(BasePermission):
         _require_authenticated(request)
         if request.user.role == "kasir":
             return True
-        return request.user.role == "admin" and _admin_verified(request)
+        return request.user.role == "admin" and admin_verified(request)
 
 
 class SchemaPermission(BasePermission):

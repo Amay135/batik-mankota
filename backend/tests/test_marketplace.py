@@ -1,6 +1,8 @@
 import pytest
+from django.core.cache import cache
 from rest_framework.test import APIClient
 
+from apps.accounts import totp
 from apps.accounts.models import User
 from apps.catalog.models import Varian
 from apps.catalog.serializers import status_stok
@@ -72,12 +74,31 @@ def test_detail(client_login):
 
 
 def test_stok_angka_hanya_admin_dan_kasir(seeded):
+    cache.clear()
     for role in ("admin", "kasir"):
+        otp_secret = totp.generate_secret() if role == "admin" else ""
         u = User.objects.create_user(
-            email=f"{role}@mankota.test", password="rahasia-kuat-1", nama_lengkap=role, role=role
+            email=f"{role}@mankota.test",
+            password="rahasia-kuat-1",
+            nama_lengkap=role,
+            role=role,
+            otp_enabled=role == "admin",
+            otp_secret=otp_secret,
         )
         c = APIClient()
-        assert c.login(username=u.email, password="rahasia-kuat-1")
+        r = c.post(
+            "/api/v1/auth/masuk/",
+            {"email": u.email, "password": "rahasia-kuat-1"},
+            format="json",
+        )
+        assert r.status_code == 200, r.content
+        if role == "admin":
+            r = c.post(
+                "/api/v1/auth/2fa/verify/",
+                {"code": totp.code_at(otp_secret)},
+                format="json",
+            )
+            assert r.status_code == 200, r.content
         d = c.get("/api/v1/katalog/produk/kemeja-parang-indigo/").json()
         v = next(v for v in d["varian"] if v["sku"] == "KM-001-ID-L")
         assert v["stok"] == 24 and "status_stok" not in v

@@ -168,7 +168,7 @@ ADMIN_CAPABILITIES += [
         "",
         "GET",
         id_="ADM-12",
-        rujukan="PRD F-INV-03; F-INV-05",
+        rujukan="PRD F-INV-03; F-INV-05; F-INV-06",
         roles=("admin", "kasir"),
     ),
     _stok(
@@ -181,8 +181,8 @@ ADMIN_CAPABILITIES += [
     _stok(
         "penyesuaian/",
         "POST",
-        id_="ADM-12",
-        rujukan="PRD F-INV-03; F-INV-04",
+        id_="ADM-13",
+        rujukan="PRD F-INV-04",
         roles=("admin",),
     ),
     _stok(
