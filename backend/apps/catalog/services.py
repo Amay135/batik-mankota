@@ -1,6 +1,7 @@
 from io import BytesIO
 from uuid import uuid4
 
+from django.core.cache import cache
 from django.core.files.base import ContentFile
 from PIL import Image, UnidentifiedImageError
 from rest_framework.exceptions import ValidationError
@@ -13,6 +14,16 @@ from .models import FotoProduk
 BATAS_FOTO_BYTE = 5 * 1024 * 1024
 FORMAT_FOTO = {"JPEG": ".jpg", "PNG": ".png", "WEBP": ".webp"}
 SISI_MAKS_FOTO = 1600
+KUNCI_VERSI_KATALOG = "katalog:versi"
+
+
+def versi_katalog() -> int:
+    return cache.get(KUNCI_VERSI_KATALOG, 0)
+
+
+def segarkan_katalog() -> None:
+    """Naikkan versi cache; semua respons tamu lama otomatis tidak terpakai."""
+    cache.set(KUNCI_VERSI_KATALOG, versi_katalog() + 1, timeout=None)
 
 
 def catat_perubahan_harga_produk(*, actor, produk, harga_lama, ip=None):

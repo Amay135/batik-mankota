@@ -41,11 +41,25 @@ class DaftarKategoriSerializer(serializers.Serializer):
     kategori = KategoriSerializer(many=True)
 
 
+class MotifSerializer(serializers.ModelSerializer):
+    jumlah = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Motif
+        fields = ["slug", "nama", "jumlah"]
+
+
+class DaftarMotifSerializer(serializers.Serializer):
+    total = serializers.IntegerField()
+    motif = MotifSerializer(many=True)
+
+
 class ProdukListSerializer(serializers.ModelSerializer):
     kategori = serializers.SerializerMethodField()
     motif = serializers.SlugRelatedField(slug_field="slug", read_only=True)
     teknik_label = serializers.CharField(read_only=True)
     label = serializers.CharField(read_only=True)
+    deskripsi_singkat = serializers.SerializerMethodField()
     foto_utama = serializers.SerializerMethodField()
 
     class Meta:
@@ -58,6 +72,7 @@ class ProdukListSerializer(serializers.ModelSerializer):
             "teknik",
             "teknik_label",
             "label",
+            "deskripsi_singkat",
             "harga",
             "unggulan",
             "motif",
@@ -72,6 +87,10 @@ class ProdukListSerializer(serializers.ModelSerializer):
             "nama": obj.kategori.nama,
             "label_pendek": obj.kategori.label_pendek,
         }
+
+    def get_deskripsi_singkat(self, obj) -> str:
+        teks = obj.deskripsi.strip()
+        return f"{teks[:120].rstrip()}…" if len(teks) > 120 else teks
 
     def get_foto_utama(self, obj):
         fotos = list(obj.foto.all())
