@@ -17,8 +17,18 @@ ALAMAT = {
 
 def test_marketplace_wajib_login(seeded):
     c = APIClient()
-    for url in ("/api/v1/katalog/produk/", "/api/v1/katalog/kategori/", "/api/v1/keranjang/", "/api/v1/auth/saya/"):
+    for url in ("/api/v1/keranjang/", "/api/v1/auth/saya/"):
         assert c.get(url).status_code in (401, 403)
+
+
+def test_katalog_publik_untuk_tamu_tanpa_data_terlarang(seeded):
+    c = APIClient()
+    for url in ("/api/v1/katalog/produk/", "/api/v1/katalog/kategori/"):
+        r = c.get(url)
+        assert r.status_code == 200
+        isi = r.content.decode()
+        for field in ("varian", "stok", "harga_beli", "ulasan"):
+            assert field not in isi, (url, field)
 
 
 def test_login_dan_daftar(seeded):

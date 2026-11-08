@@ -16,10 +16,13 @@ import { EmptyState, ErrorState, Memuat } from "./keadaan";
 const LABEL_AKSI: Record<BarisAudit["action"], string> = {
   price_change: "Ubah harga",
   stock_adjust: "Penyesuaian stok",
+  min_stock_change: "Ubah stok minimum",
   void_return: "Void/retur",
   role_change: "Ubah role",
   admin_login: "Login admin",
   otp_reset: "Reset 2FA",
+  review_moderate: "Moderasi ulasan",
+  size_guide_change: "Ubah panduan ukuran",
 };
 
 // Sama dengan AuditPagination.page_size di backend.

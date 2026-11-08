@@ -219,6 +219,22 @@ export interface paths {
         patch: operations["v1_auth_saya_partial_update"];
         trace?: never;
     };
+    "/api/v1/kasir/varian/{token}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_kasir_varian_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/katalog/kategori/": {
         parameters: {
             query?: never;
@@ -227,6 +243,262 @@ export interface paths {
             cookie?: never;
         };
         get: operations["v1_katalog_kategori_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/katalog/kelola/foto/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["v1_katalog_kelola_foto_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/katalog/kelola/kategori/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_katalog_kelola_kategori_list"];
+        put?: never;
+        post: operations["v1_katalog_kelola_kategori_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/katalog/kelola/kategori/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_katalog_kelola_kategori_retrieve"];
+        put: operations["v1_katalog_kelola_kategori_update"];
+        post?: never;
+        delete: operations["v1_katalog_kelola_kategori_destroy"];
+        options?: never;
+        head?: never;
+        patch: operations["v1_katalog_kelola_kategori_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/katalog/kelola/motif/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_katalog_kelola_motif_list"];
+        put?: never;
+        post: operations["v1_katalog_kelola_motif_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/katalog/kelola/motif/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_katalog_kelola_motif_retrieve"];
+        put: operations["v1_katalog_kelola_motif_update"];
+        post?: never;
+        delete: operations["v1_katalog_kelola_motif_destroy"];
+        options?: never;
+        head?: never;
+        patch: operations["v1_katalog_kelola_motif_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/katalog/kelola/panduan-ukuran/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_katalog_kelola_panduan_ukuran_list"];
+        put?: never;
+        post: operations["v1_katalog_kelola_panduan_ukuran_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/katalog/kelola/panduan-ukuran/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_katalog_kelola_panduan_ukuran_retrieve"];
+        put: operations["v1_katalog_kelola_panduan_ukuran_update"];
+        post?: never;
+        delete: operations["v1_katalog_kelola_panduan_ukuran_destroy"];
+        options?: never;
+        head?: never;
+        patch: operations["v1_katalog_kelola_panduan_ukuran_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/katalog/kelola/produk/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_katalog_kelola_produk_list"];
+        put?: never;
+        post: operations["v1_katalog_kelola_produk_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/katalog/kelola/produk/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_katalog_kelola_produk_retrieve"];
+        put: operations["v1_katalog_kelola_produk_update"];
+        post?: never;
+        delete: operations["v1_katalog_kelola_produk_destroy"];
+        options?: never;
+        head?: never;
+        patch: operations["v1_katalog_kelola_produk_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/katalog/kelola/produk/{id}/foto/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_katalog_kelola_produk_foto_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/katalog/kelola/produk/{id}/varian/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_katalog_kelola_produk_varian_list"];
+        put?: never;
+        post: operations["v1_katalog_kelola_produk_varian_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/katalog/kelola/ulasan/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_katalog_kelola_ulasan_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/katalog/kelola/ulasan/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_katalog_kelola_ulasan_retrieve"];
+        put: operations["v1_katalog_kelola_ulasan_update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["v1_katalog_kelola_ulasan_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/katalog/kelola/varian/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_katalog_kelola_varian_retrieve"];
+        put: operations["v1_katalog_kelola_varian_update"];
+        post?: never;
+        delete: operations["v1_katalog_kelola_varian_destroy"];
+        options?: never;
+        head?: never;
+        patch: operations["v1_katalog_kelola_varian_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/katalog/label/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_katalog_label_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/katalog/motif/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_katalog_motif_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -259,6 +531,54 @@ export interface paths {
             cookie?: never;
         };
         get: operations["v1_katalog_produk_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/katalog/produk/{slug}/ulasan/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_katalog_produk_ulasan_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/katalog/ulasan/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["v1_katalog_ulasan_destroy"];
+        options?: never;
+        head?: never;
+        patch: operations["v1_katalog_ulasan_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/katalog/varian/{id}/qr/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_katalog_varian_qr_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -363,6 +683,134 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/stok/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_stok_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stok/{id}/minimum/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["v1_stok_minimum_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/stok/menipis/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_stok_menipis_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stok/mutasi/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_stok_mutasi_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stok/opname/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_stok_opname_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stok/opname/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_stok_opname_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stok/opname/{id}/terapkan/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_stok_opname_terapkan_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stok/penyesuaian/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_stok_penyesuaian_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -370,13 +818,16 @@ export interface components {
         /**
          * @description * `price_change` - Ubah harga
          *     * `stock_adjust` - Penyesuaian stok
+         *     * `min_stock_change` - Ubah stok minimum
          *     * `void_return` - Void/retur
          *     * `role_change` - Ubah role
          *     * `admin_login` - Login admin
          *     * `otp_reset` - Reset 2FA
+         *     * `review_moderate` - Moderasi ulasan
+         *     * `size_guide_change` - Ubah panduan ukuran
          * @enum {string}
          */
-        ActionEnum: "price_change" | "stock_adjust" | "void_return" | "role_change" | "admin_login" | "otp_reset";
+        ActionEnum: "price_change" | "stock_adjust" | "min_stock_change" | "void_return" | "role_change" | "admin_login" | "otp_reset" | "review_moderate" | "size_guide_change";
         AkunAdmin: {
             readonly id: number;
             /** Format: email */
@@ -423,6 +874,10 @@ export interface components {
             whatsapp?: string;
             role: components["schemas"]["StaffRoleEnum"];
         };
+        BuatOpname: {
+            catatan: string;
+            items: components["schemas"]["OpnameItemMasuk"][];
+        };
         BuatPesanan: {
             nama_lengkap: string;
             whatsapp: string;
@@ -443,9 +898,20 @@ export interface components {
             total: number;
             kategori: components["schemas"]["Kategori"][];
         };
+        DaftarMotif: {
+            total: number;
+            motif: components["schemas"]["Motif"][];
+        };
         Foto: {
             jenis?: components["schemas"]["JenisEnum"];
             readonly url: string;
+        };
+        FotoAdmin: {
+            readonly id: number;
+            jenis?: components["schemas"]["JenisEnum"];
+            alt?: string;
+            urutan?: number;
+            readonly url: string | null;
         };
         Galat: {
             readonly code: string;
@@ -459,7 +925,6 @@ export interface components {
         };
         ItemKeranjang: {
             readonly id: number;
-            /** Format: int64 */
             jumlah?: number;
             readonly varian: string;
             readonly produk: string;
@@ -474,9 +939,7 @@ export interface components {
             warna: string;
             ukuran: string;
             sku: string;
-            /** Format: int64 */
             harga: number;
-            /** Format: int64 */
             jumlah: number;
             readonly subtotal: number;
         };
@@ -495,12 +958,39 @@ export interface components {
             label_pendek: string;
             readonly jumlah: number;
         };
+        KategoriAdmin: {
+            readonly id: number;
+            nama: string;
+            slug: string;
+            /** @description Dipakai di kartu produk, mis. Pria */
+            label_pendek: string;
+            urutan?: number;
+        };
         Keranjang: {
             item: components["schemas"]["ItemKeranjang"][];
             ringkasan: components["schemas"]["Ringkasan"];
         };
         KodeVoucher: {
             kode: string;
+        };
+        LabelCetak: {
+            /** @default 40x30 */
+            ukuran: components["schemas"]["LabelCetakUkuranEnum"];
+            varian?: components["schemas"]["LabelItem"][];
+            produk?: number;
+            /** @default 1 */
+            salinan: number;
+        };
+        /**
+         * @description * `40x30` - 40x30
+         *     * `58x40` - 58x40
+         * @enum {string}
+         */
+        LabelCetakUkuranEnum: "40x30" | "58x40";
+        LabelItem: {
+            id: number;
+            /** @default 1 */
+            salinan: number;
         };
         Login: {
             /** Format: email */
@@ -514,6 +1004,65 @@ export interface components {
          * @enum {string}
          */
         MetodeBayarEnum: "transfer_bank" | "qris" | "dompet_digital";
+        Motif: {
+            slug: string;
+            nama: string;
+            readonly jumlah: number;
+        };
+        MotifAdmin: {
+            readonly id: number;
+            nama: string;
+            slug: string;
+            deskripsi?: string;
+        };
+        Mutasi: {
+            readonly id: number;
+            readonly varian: number;
+            readonly sku: string;
+            readonly tipe: string;
+            readonly tipe_label: string;
+            readonly qty_delta: number;
+            readonly ref_type: string;
+            readonly ref_id: string;
+            /** Format: email */
+            readonly pelaku: string | null;
+            readonly catatan: string;
+            /** Format: date-time */
+            readonly dibuat: string;
+        };
+        Opname: {
+            readonly id: number;
+            status?: components["schemas"]["OpnameStatusEnum"];
+            readonly status_label: string;
+            readonly catatan: string;
+            /** Format: email */
+            readonly dibuat_oleh: string;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            applied_at?: string | null;
+            readonly items: components["schemas"]["OpnameItem"][];
+        };
+        OpnameItem: {
+            readonly varian: number;
+            readonly sku: string;
+            readonly produk: string;
+            readonly ukuran: string;
+            readonly warna: string;
+            system_qty: number;
+            counted_qty: number;
+            readonly selisih: number;
+        };
+        OpnameItemMasuk: {
+            varian_id: number;
+            qty_fisik: number;
+        };
+        /**
+         * @description * `DRAFT` - Draf
+         *     * `APPLIED` - Diterapkan
+         * @enum {string}
+         */
+        OpnameStatusEnum: "DRAFT" | "APPLIED";
         OtpVerify: {
             code: string;
         };
@@ -532,7 +1081,7 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["AuditLog"][];
         };
-        PaginatedProdukListList: {
+        PaginatedMutasiList: {
             /** @example 123 */
             count: number;
             /**
@@ -545,7 +1094,94 @@ export interface components {
              * @example http://api.example.org/accounts/?page=2
              */
             previous?: string | null;
-            results: components["schemas"]["ProdukList"][];
+            results: components["schemas"]["Mutasi"][];
+        };
+        PaginatedProdukListList: {
+            jumlah: number;
+            halaman: number;
+            per_halaman: number;
+            total_halaman: number;
+            dari: number;
+            sampai: number;
+            hasil: components["schemas"]["ProdukList"][];
+        };
+        PaginatedStokList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["Stok"][];
+        };
+        PanduanUkuranAdmin: {
+            readonly id: number;
+            kategori: number;
+            tabel?: unknown;
+            /** Format: date-time */
+            readonly diperbarui: string;
+        };
+        PatchedKategoriAdmin: {
+            readonly id?: number;
+            nama?: string;
+            slug?: string;
+            /** @description Dipakai di kartu produk, mis. Pria */
+            label_pendek?: string;
+            urutan?: number;
+        };
+        PatchedMinimumStok: {
+            min_stock?: number;
+            alasan?: string;
+        };
+        PatchedMotifAdmin: {
+            readonly id?: number;
+            nama?: string;
+            slug?: string;
+            deskripsi?: string;
+        };
+        PatchedPanduanUkuranAdmin: {
+            readonly id?: number;
+            kategori?: number;
+            tabel?: unknown;
+            /** Format: date-time */
+            readonly diperbarui?: string;
+        };
+        PatchedProdukAdmin: {
+            readonly id?: number;
+            nama?: string;
+            slug?: string;
+            kategori?: number;
+            teknik?: components["schemas"]["TeknikEnum"];
+            motif?: string;
+            /** @description kemeja, blus, dress, rok, outer, kain, selendang, pouch */
+            bentuk?: string;
+            warna_utama?: components["schemas"]["WarnaUtamaEnum"];
+            koleksi?: string;
+            perajin?: string;
+            deskripsi?: string;
+            bahan_detail?: string;
+            perawatan?: string;
+            cerita_judul?: string;
+            cerita_isi?: string;
+            /** @description Rupiah, tanpa desimal */
+            harga?: number;
+            /** Format: decimal */
+            readonly rating?: string;
+            readonly jumlah_ulasan?: number;
+            readonly terjual?: number;
+            /** @description Tampil dengan lencana Pilihan Mankota */
+            unggulan?: boolean;
+            aktif?: boolean;
+            /** Format: date-time */
+            readonly dibuat?: string;
+            readonly varian?: components["schemas"]["VarianAdmin"][];
+            readonly foto?: components["schemas"]["FotoAdmin"][];
         };
         PatchedUbahAkun: {
             nama_lengkap?: string;
@@ -560,6 +1196,21 @@ export interface components {
         PatchedUbahJumlah: {
             jumlah?: number;
         };
+        PatchedUlasanAdmin: {
+            readonly id?: number;
+            readonly produk?: string;
+            /** Format: email */
+            readonly pengguna?: string;
+            readonly rating?: number;
+            readonly teks?: string;
+            tampil?: boolean;
+            /** Format: date-time */
+            readonly dibuat?: string;
+        };
+        PatchedUlasanTulis: {
+            rating?: number;
+            teks?: string;
+        };
         PatchedUser: {
             readonly id?: number;
             /** Format: email */
@@ -570,9 +1221,27 @@ export interface components {
             readonly totp_enrolled?: boolean;
             readonly totp_verified?: boolean;
         };
+        PatchedVarianAdmin: {
+            readonly id?: number;
+            readonly produk?: number;
+            warna?: components["schemas"]["WarnaEnum"];
+            ukuran?: components["schemas"]["VarianAdminUkuranEnum"];
+            sku?: string;
+            /** @description Harga beli/HPP, Rupiah tanpa desimal; hanya untuk admin */
+            harga_beli?: number;
+            readonly qr_token?: string;
+            aktif?: boolean;
+            readonly stok?: number;
+            readonly status_stok?: string;
+        };
+        Penyesuaian: {
+            varian_id: number;
+            qty_delta: number;
+            alasan: string;
+        };
         Pesanan: {
             nomor: string;
-            status?: components["schemas"]["StatusEnum"];
+            status?: components["schemas"]["PesananStatusEnum"];
             readonly status_label: string;
             nama_lengkap: string;
             whatsapp: string;
@@ -585,15 +1254,10 @@ export interface components {
             kode_pos: string;
             kurir?: string;
             voucher_kode?: string;
-            /** Format: int64 */
             subtotal: number;
-            /** Format: int64 */
             ongkir: number;
-            /** Format: int64 */
             promo_ongkir?: number;
-            /** Format: int64 */
             diskon?: number;
-            /** Format: int64 */
             total: number;
             metode_bayar: components["schemas"]["MetodeBayarEnum"];
             readonly metode_label: string;
@@ -605,7 +1269,48 @@ export interface components {
             readonly dibuat: string;
             readonly item: components["schemas"]["ItemPesanan"][];
         };
-        ProdukDetail: {
+        /**
+         * @description * `menunggu_pembayaran` - Menunggu pembayaran
+         *     * `dibayar` - Sudah dibayar
+         *     * `diproses` - Sedang diproses
+         *     * `dikirim` - Dalam pengiriman
+         *     * `selesai` - Selesai
+         *     * `dibatalkan` - Dibatalkan
+         * @enum {string}
+         */
+        PesananStatusEnum: "menunggu_pembayaran" | "dibayar" | "diproses" | "dikirim" | "selesai" | "dibatalkan";
+        ProdukAdmin: {
+            readonly id: number;
+            nama: string;
+            slug: string;
+            kategori: number;
+            teknik: components["schemas"]["TeknikEnum"];
+            motif: string;
+            /** @description kemeja, blus, dress, rok, outer, kain, selendang, pouch */
+            bentuk: string;
+            warna_utama: components["schemas"]["WarnaUtamaEnum"];
+            koleksi?: string;
+            perajin?: string;
+            deskripsi?: string;
+            bahan_detail?: string;
+            perawatan?: string;
+            cerita_judul?: string;
+            cerita_isi?: string;
+            /** @description Rupiah, tanpa desimal */
+            harga: number;
+            /** Format: decimal */
+            readonly rating: string;
+            readonly jumlah_ulasan: number;
+            readonly terjual: number;
+            /** @description Tampil dengan lencana Pilihan Mankota */
+            unggulan?: boolean;
+            aktif?: boolean;
+            /** Format: date-time */
+            readonly dibuat: string;
+            readonly varian: components["schemas"]["VarianAdmin"][];
+            readonly foto: components["schemas"]["FotoAdmin"][];
+        };
+        ProdukDetailTamu: {
             readonly id: number;
             slug: string;
             nama: string;
@@ -613,36 +1318,18 @@ export interface components {
             teknik: components["schemas"]["TeknikEnum"];
             readonly teknik_label: string;
             readonly label: string;
-            /**
-             * Format: int64
-             * @description Rupiah, tanpa desimal
-             */
+            readonly deskripsi_singkat: string;
+            /** @description Rupiah, tanpa desimal */
             harga: number;
             /** @description Tampil dengan lencana Pilihan Mankota */
             unggulan?: boolean;
-            /** @description parang, kawung, truntum, sekar-jagad, mega-mendung */
-            motif: string;
+            readonly motif: string;
             /** @description kemeja, blus, dress, rok, outer, kain, selendang, pouch */
             bentuk: string;
             warna_utama: components["schemas"]["WarnaUtamaEnum"];
             readonly foto_utama: string;
             deskripsi?: string;
-            bahan_detail?: string;
-            perawatan?: string;
-            koleksi?: string;
-            perajin?: string;
-            cerita_judul?: string;
-            cerita_isi?: string;
-            /** Format: decimal */
-            rating?: string;
-            /** Format: int64 */
-            jumlah_ulasan?: number;
-            /** Format: int64 */
-            terjual?: number;
-            readonly varian: components["schemas"]["Varian"][];
             readonly foto: components["schemas"]["Foto"][];
-            readonly tersedia: string;
-            readonly terkait: string;
         };
         ProdukList: {
             readonly id: number;
@@ -652,15 +1339,12 @@ export interface components {
             teknik: components["schemas"]["TeknikEnum"];
             readonly teknik_label: string;
             readonly label: string;
-            /**
-             * Format: int64
-             * @description Rupiah, tanpa desimal
-             */
+            readonly deskripsi_singkat: string;
+            /** @description Rupiah, tanpa desimal */
             harga: number;
             /** @description Tampil dengan lencana Pilihan Mankota */
             unggulan?: boolean;
-            /** @description parang, kawung, truntum, sekar-jagad, mega-mendung */
-            motif: string;
+            readonly motif: string;
             /** @description kemeja, blus, dress, rok, outer, kain, selendang, pouch */
             bentuk: string;
             warna_utama: components["schemas"]["WarnaUtamaEnum"];
@@ -705,16 +1389,18 @@ export interface components {
          * @enum {string}
          */
         StaffRoleEnum: "admin" | "kasir";
-        /**
-         * @description * `menunggu_pembayaran` - Menunggu pembayaran
-         *     * `dibayar` - Sudah dibayar
-         *     * `diproses` - Sedang diproses
-         *     * `dikirim` - Dalam pengiriman
-         *     * `selesai` - Selesai
-         *     * `dibatalkan` - Dibatalkan
-         * @enum {string}
-         */
-        StatusEnum: "menunggu_pembayaran" | "dibayar" | "diproses" | "dikirim" | "selesai" | "dibatalkan";
+        Stok: {
+            readonly varian: number;
+            readonly sku: string;
+            readonly produk: string;
+            readonly ukuran: string;
+            readonly warna: string;
+            readonly stok_fisik: number;
+            readonly stok_terpesan: number;
+            readonly stok_tersedia: number;
+            readonly stok_minimum: number;
+            readonly status_stok: string;
+        };
         TambahItem: {
             varian_id: number;
             /** @default 1 */
@@ -727,16 +1413,39 @@ export interface components {
          * @enum {string}
          */
         TeknikEnum: "tulis" | "cap" | "kombinasi";
-        /**
-         * @description * `S` - S
-         *     * `M` - M
-         *     * `L` - L
-         *     * `XL` - XL
-         *     * `XXL` - XXL
-         *     * `ALL` - Satu ukuran
-         * @enum {string}
-         */
-        UkuranEnum: "S" | "M" | "L" | "XL" | "XXL" | "ALL";
+        Ulasan: {
+            readonly id: number;
+            readonly nama: string;
+            rating: number;
+            teks?: string;
+            /** Format: date-time */
+            readonly dibuat: string;
+        };
+        UlasanAdmin: {
+            readonly id: number;
+            readonly produk: string;
+            /** Format: email */
+            readonly pengguna: string;
+            readonly rating: number;
+            readonly teks: string;
+            tampil?: boolean;
+            /** Format: date-time */
+            readonly dibuat: string;
+        };
+        UlasanTulis: {
+            rating: number;
+            teks?: string;
+        };
+        UnggahFoto: {
+            /** Format: uri */
+            gambar: string;
+            /** @default depan */
+            jenis: components["schemas"]["JenisEnum"];
+            /** @default  */
+            alt: string;
+            /** @default 0 */
+            urutan: number;
+        };
         User: {
             readonly id: number;
             /** Format: email */
@@ -747,14 +1456,37 @@ export interface components {
             readonly totp_enrolled: boolean;
             readonly totp_verified: boolean;
         };
-        Varian: {
+        VarianAdmin: {
             readonly id: number;
+            readonly produk: number;
             warna: components["schemas"]["WarnaEnum"];
-            ukuran: components["schemas"]["UkuranEnum"];
+            ukuran: components["schemas"]["VarianAdminUkuranEnum"];
             sku: string;
-            /** Format: int64 */
-            stok?: number;
+            /** @description Harga beli/HPP, Rupiah tanpa desimal; hanya untuk admin */
+            harga_beli?: number;
+            readonly qr_token: string;
+            aktif?: boolean;
+            readonly stok: number;
             readonly status_stok: string;
+        };
+        /**
+         * @description * `S` - S
+         *     * `M` - M
+         *     * `L` - L
+         *     * `XL` - XL
+         *     * `XXL` - XXL
+         *     * `ALL` - Satu ukuran
+         * @enum {string}
+         */
+        VarianAdminUkuranEnum: "S" | "M" | "L" | "XL" | "XXL" | "ALL";
+        VarianScan: {
+            readonly id: number;
+            nama: string;
+            sku: string;
+            warna: string;
+            ukuran: string;
+            harga: number;
+            readonly stok: number;
         };
         /**
          * @description * `indigo` - Indigo
@@ -820,12 +1552,15 @@ export interface operations {
                 /**
                  * @description * `price_change` - Ubah harga
                  *     * `stock_adjust` - Penyesuaian stok
+                 *     * `min_stock_change` - Ubah stok minimum
                  *     * `void_return` - Void/retur
                  *     * `role_change` - Ubah role
                  *     * `admin_login` - Login admin
                  *     * `otp_reset` - Reset 2FA
+                 *     * `review_moderate` - Moderasi ulasan
+                 *     * `size_guide_change` - Ubah panduan ukuran
                  */
-                aksi?: "price_change" | "stock_adjust" | "void_return" | "role_change" | "admin_login" | "otp_reset";
+                aksi?: "price_change" | "stock_adjust" | "min_stock_change" | "void_return" | "role_change" | "admin_login" | "otp_reset" | "review_moderate" | "size_guide_change";
                 dari?: string;
                 /** @description A page number within the paginated result set. */
                 page?: number;
@@ -1191,6 +1926,35 @@ export interface operations {
             };
         };
     };
+    v1_kasir_varian_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VarianScan"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Galat"];
+                };
+            };
+        };
+    };
     v1_katalog_kategori_retrieve: {
         parameters: {
             query?: never;
@@ -1206,6 +1970,898 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DaftarKategori"];
+                };
+            };
+        };
+    };
+    v1_katalog_kelola_foto_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    v1_katalog_kelola_kategori_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KategoriAdmin"][];
+                };
+            };
+        };
+    };
+    v1_katalog_kelola_kategori_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KategoriAdmin"];
+                "application/x-www-form-urlencoded": components["schemas"]["KategoriAdmin"];
+                "multipart/form-data": components["schemas"]["KategoriAdmin"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KategoriAdmin"];
+                };
+            };
+        };
+    };
+    v1_katalog_kelola_kategori_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KategoriAdmin"];
+                };
+            };
+        };
+    };
+    v1_katalog_kelola_kategori_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KategoriAdmin"];
+                "application/x-www-form-urlencoded": components["schemas"]["KategoriAdmin"];
+                "multipart/form-data": components["schemas"]["KategoriAdmin"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KategoriAdmin"];
+                };
+            };
+        };
+    };
+    v1_katalog_kelola_kategori_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    v1_katalog_kelola_kategori_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedKategoriAdmin"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedKategoriAdmin"];
+                "multipart/form-data": components["schemas"]["PatchedKategoriAdmin"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KategoriAdmin"];
+                };
+            };
+        };
+    };
+    v1_katalog_kelola_motif_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MotifAdmin"][];
+                };
+            };
+        };
+    };
+    v1_katalog_kelola_motif_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MotifAdmin"];
+                "application/x-www-form-urlencoded": components["schemas"]["MotifAdmin"];
+                "multipart/form-data": components["schemas"]["MotifAdmin"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MotifAdmin"];
+                };
+            };
+        };
+    };
+    v1_katalog_kelola_motif_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MotifAdmin"];
+                };
+            };
+        };
+    };
+    v1_katalog_kelola_motif_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MotifAdmin"];
+                "application/x-www-form-urlencoded": components["schemas"]["MotifAdmin"];
+                "multipart/form-data": components["schemas"]["MotifAdmin"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MotifAdmin"];
+                };
+            };
+        };
+    };
+    v1_katalog_kelola_motif_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    v1_katalog_kelola_motif_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedMotifAdmin"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedMotifAdmin"];
+                "multipart/form-data": components["schemas"]["PatchedMotifAdmin"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MotifAdmin"];
+                };
+            };
+        };
+    };
+    v1_katalog_kelola_panduan_ukuran_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PanduanUkuranAdmin"][];
+                };
+            };
+        };
+    };
+    v1_katalog_kelola_panduan_ukuran_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PanduanUkuranAdmin"];
+                "application/x-www-form-urlencoded": components["schemas"]["PanduanUkuranAdmin"];
+                "multipart/form-data": components["schemas"]["PanduanUkuranAdmin"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PanduanUkuranAdmin"];
+                };
+            };
+        };
+    };
+    v1_katalog_kelola_panduan_ukuran_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PanduanUkuranAdmin"];
+                };
+            };
+        };
+    };
+    v1_katalog_kelola_panduan_ukuran_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PanduanUkuranAdmin"];
+                "application/x-www-form-urlencoded": components["schemas"]["PanduanUkuranAdmin"];
+                "multipart/form-data": components["schemas"]["PanduanUkuranAdmin"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PanduanUkuranAdmin"];
+                };
+            };
+        };
+    };
+    v1_katalog_kelola_panduan_ukuran_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    v1_katalog_kelola_panduan_ukuran_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedPanduanUkuranAdmin"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedPanduanUkuranAdmin"];
+                "multipart/form-data": components["schemas"]["PatchedPanduanUkuranAdmin"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PanduanUkuranAdmin"];
+                };
+            };
+        };
+    };
+    v1_katalog_kelola_produk_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProdukAdmin"][];
+                };
+            };
+        };
+    };
+    v1_katalog_kelola_produk_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProdukAdmin"];
+                "application/x-www-form-urlencoded": components["schemas"]["ProdukAdmin"];
+                "multipart/form-data": components["schemas"]["ProdukAdmin"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProdukAdmin"];
+                };
+            };
+        };
+    };
+    v1_katalog_kelola_produk_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProdukAdmin"];
+                };
+            };
+        };
+    };
+    v1_katalog_kelola_produk_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProdukAdmin"];
+                "application/x-www-form-urlencoded": components["schemas"]["ProdukAdmin"];
+                "multipart/form-data": components["schemas"]["ProdukAdmin"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProdukAdmin"];
+                };
+            };
+        };
+    };
+    v1_katalog_kelola_produk_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    v1_katalog_kelola_produk_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedProdukAdmin"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedProdukAdmin"];
+                "multipart/form-data": components["schemas"]["PatchedProdukAdmin"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProdukAdmin"];
+                };
+            };
+        };
+    };
+    v1_katalog_kelola_produk_foto_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UnggahFoto"];
+                "application/x-www-form-urlencoded": components["schemas"]["UnggahFoto"];
+                "multipart/form-data": components["schemas"]["UnggahFoto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FotoAdmin"];
+                };
+            };
+        };
+    };
+    v1_katalog_kelola_produk_varian_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VarianAdmin"][];
+                };
+            };
+        };
+    };
+    v1_katalog_kelola_produk_varian_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VarianAdmin"];
+                "application/x-www-form-urlencoded": components["schemas"]["VarianAdmin"];
+                "multipart/form-data": components["schemas"]["VarianAdmin"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VarianAdmin"];
+                };
+            };
+        };
+    };
+    v1_katalog_kelola_ulasan_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UlasanAdmin"][];
+                };
+            };
+        };
+    };
+    v1_katalog_kelola_ulasan_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UlasanAdmin"];
+                };
+            };
+        };
+    };
+    v1_katalog_kelola_ulasan_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UlasanAdmin"];
+                "application/x-www-form-urlencoded": components["schemas"]["UlasanAdmin"];
+                "multipart/form-data": components["schemas"]["UlasanAdmin"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UlasanAdmin"];
+                };
+            };
+        };
+    };
+    v1_katalog_kelola_ulasan_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedUlasanAdmin"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedUlasanAdmin"];
+                "multipart/form-data": components["schemas"]["PatchedUlasanAdmin"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UlasanAdmin"];
+                };
+            };
+        };
+    };
+    v1_katalog_kelola_varian_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VarianAdmin"];
+                };
+            };
+        };
+    };
+    v1_katalog_kelola_varian_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VarianAdmin"];
+                "application/x-www-form-urlencoded": components["schemas"]["VarianAdmin"];
+                "multipart/form-data": components["schemas"]["VarianAdmin"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VarianAdmin"];
+                };
+            };
+        };
+    };
+    v1_katalog_kelola_varian_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    v1_katalog_kelola_varian_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedVarianAdmin"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedVarianAdmin"];
+                "multipart/form-data": components["schemas"]["PatchedVarianAdmin"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VarianAdmin"];
+                };
+            };
+        };
+    };
+    v1_katalog_label_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["LabelCetak"];
+                "application/x-www-form-urlencoded": components["schemas"]["LabelCetak"];
+                "multipart/form-data": components["schemas"]["LabelCetak"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Galat"];
+                };
+            };
+        };
+    };
+    v1_katalog_motif_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DaftarMotif"];
                 };
             };
         };
@@ -1250,7 +2906,119 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProdukDetail"];
+                    "application/json": components["schemas"]["ProdukDetailTamu"];
+                };
+            };
+        };
+    };
+    v1_katalog_produk_ulasan_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UlasanTulis"];
+                "application/x-www-form-urlencoded": components["schemas"]["UlasanTulis"];
+                "multipart/form-data": components["schemas"]["UlasanTulis"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Ulasan"];
+                };
+            };
+        };
+    };
+    v1_katalog_ulasan_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    v1_katalog_ulasan_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedUlasanTulis"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedUlasanTulis"];
+                "multipart/form-data": components["schemas"]["PatchedUlasanTulis"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Ulasan"];
+                };
+            };
+        };
+    };
+    v1_katalog_varian_qr_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/svg+xml": string;
+                    "image/png": string;
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Galat"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Galat"];
                 };
             };
         };
@@ -1450,6 +3218,277 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Pesanan"];
+                };
+            };
+        };
+    };
+    v1_stok_list: {
+        parameters: {
+            query?: {
+                kategori?: string;
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                per_halaman?: number;
+                q?: string;
+                /**
+                 * @description * `S` - S
+                 *     * `M` - M
+                 *     * `L` - L
+                 *     * `XL` - XL
+                 *     * `XXL` - XXL
+                 *     * `ALL` - Satu ukuran
+                 */
+                ukuran?: "S" | "M" | "L" | "XL" | "XXL" | "ALL";
+                /**
+                 * @description * `indigo` - Indigo
+                 *     * `soga` - Soga
+                 *     * `krem` - Krem
+                 *     * `hitam` - Hitam
+                 */
+                warna?: "indigo" | "soga" | "krem" | "hitam";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedStokList"];
+                };
+            };
+        };
+    };
+    v1_stok_minimum_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedMinimumStok"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedMinimumStok"];
+                "multipart/form-data": components["schemas"]["PatchedMinimumStok"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Stok"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Galat"];
+                };
+            };
+        };
+    };
+    v1_stok_menipis_list: {
+        parameters: {
+            query?: {
+                kategori?: string;
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                per_halaman?: number;
+                q?: string;
+                /**
+                 * @description * `S` - S
+                 *     * `M` - M
+                 *     * `L` - L
+                 *     * `XL` - XL
+                 *     * `XXL` - XXL
+                 *     * `ALL` - Satu ukuran
+                 */
+                ukuran?: "S" | "M" | "L" | "XL" | "XXL" | "ALL";
+                /**
+                 * @description * `indigo` - Indigo
+                 *     * `soga` - Soga
+                 *     * `krem` - Krem
+                 *     * `hitam` - Hitam
+                 */
+                warna?: "indigo" | "soga" | "krem" | "hitam";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedStokList"];
+                };
+            };
+        };
+    };
+    v1_stok_mutasi_list: {
+        parameters: {
+            query?: {
+                dari?: string;
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                per_halaman?: number;
+                sampai?: string;
+                /**
+                 * @description * `PURCHASE_IN` - Pembelian masuk
+                 *     * `POS_OUT` - Penjualan kasir
+                 *     * `ONLINE_OUT` - Penjualan online
+                 *     * `RETURN_IN` - Retur masuk
+                 *     * `ADJUST` - Penyesuaian
+                 *     * `OPNAME` - Stok opname
+                 */
+                tipe?: "PURCHASE_IN" | "POS_OUT" | "ONLINE_OUT" | "RETURN_IN" | "ADJUST" | "OPNAME";
+                varian_id?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedMutasiList"];
+                };
+            };
+        };
+    };
+    v1_stok_opname_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BuatOpname"];
+                "application/x-www-form-urlencoded": components["schemas"]["BuatOpname"];
+                "multipart/form-data": components["schemas"]["BuatOpname"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Opname"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Galat"];
+                };
+            };
+        };
+    };
+    v1_stok_opname_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Opname"];
+                };
+            };
+        };
+    };
+    v1_stok_opname_terapkan_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Opname"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Galat"];
+                };
+            };
+        };
+    };
+    v1_stok_penyesuaian_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Penyesuaian"];
+                "application/x-www-form-urlencoded": components["schemas"]["Penyesuaian"];
+                "multipart/form-data": components["schemas"]["Penyesuaian"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Mutasi"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Galat"];
                 };
             };
         };

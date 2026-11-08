@@ -1,9 +1,10 @@
+from django.utils.html import strip_tags
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from apps.inventory.selectors import available_for_variant
 
-from .models import FotoProduk, Kategori, Motif, Produk, Varian
+from .models import FotoProduk, Kategori, Motif, PanduanUkuran, Produk, Ulasan, Varian
 from .qr import BATAS_HALAMAN, UKURAN_LABEL
 
 AMBANG_STOK_SEDIKIT = 5
@@ -131,11 +132,67 @@ class FotoSerializer(serializers.ModelSerializer):
         return url_foto(obj, self.context.get("request"))
 
 
+class UlasanTulisSerializer(serializers.ModelSerializer):
+    rating = serializers.IntegerField(min_value=1, max_value=5)
+
+    class Meta:
+        model = Ulasan
+        fields = ["rating", "teks"]
+
+    def validate_teks(self, value) -> str:
+        return strip_tags(value).strip()
+
+
+class UlasanSerializer(serializers.ModelSerializer):
+    nama = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Ulasan
+        fields = ["id", "nama", "rating", "teks", "dibuat"]
+
+    def get_nama(self, obj) -> str:
+        return obj.user.nama_lengkap or "Pelanggan"
+
+
+class UlasanAdminSerializer(serializers.ModelSerializer):
+    produk = serializers.SlugRelatedField(slug_field="slug", read_only=True)
+    pengguna = serializers.EmailField(source="user.email", read_only=True)
+
+    class Meta:
+        model = Ulasan
+        fields = ["id", "produk", "pengguna", "rating", "teks", "tampil", "dibuat"]
+        read_only_fields = ["rating", "teks", "dibuat"]
+
+
+class PanduanUkuranAdminSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PanduanUkuran
+        fields = ["id", "kategori", "tabel", "diperbarui"]
+        read_only_fields = ["diperbarui"]
+
+    def validate_tabel(self, value):
+        if not isinstance(value, list) or not 2 <= len(value) <= 20:
+            raise serializers.ValidationError("Tabel harus berisi 2 sampai 20 baris.")
+        if not isinstance(value[0], list) or not 2 <= len(value[0]) <= 10:
+            raise serializers.ValidationError("Tabel harus berisi 2 sampai 10 kolom.")
+        lebar = len(value[0])
+        for baris in value:
+            if not isinstance(baris, list) or len(baris) != lebar:
+                raise serializers.ValidationError("Semua baris harus sama panjang.")
+            if any(not isinstance(sel, str) or len(sel) > 20 for sel in baris):
+                raise serializers.ValidationError(
+                    "Setiap sel harus teks maksimal 20 karakter."
+                )
+        return value
+
+
 class ProdukDetailSerializer(ProdukListSerializer):
     varian = VarianSerializer(many=True, read_only=True)
     foto = FotoSerializer(many=True, read_only=True)
     tersedia = serializers.SerializerMethodField()
     terkait = serializers.SerializerMethodField()
+    ulasan = serializers.SerializerMethodField()
+    panduan_ukuran = serializers.SerializerMethodField()
 
     class Meta(ProdukListSerializer.Meta):
         fields = [
@@ -154,7 +211,24 @@ class ProdukDetailSerializer(ProdukListSerializer):
             "foto",
             "tersedia",
             "terkait",
+            "ulasan",
+            "panduan_ukuran",
         ]
+
+    @extend_schema_field(UlasanSerializer(many=True))
+    def get_ulasan(self, obj):
+        return UlasanSerializer(obj.ulasan.all(), many=True).data
+
+    @extend_schema_field(
+        {
+            "type": "array",
+            "nullable": True,
+            "items": {"type": "array", "items": {"type": "string"}},
+        }
+    )
+    def get_panduan_ukuran(self, obj):
+        panduan = getattr(obj.kategori, "panduan_ukuran", None)
+        return panduan.tabel if panduan else None
 
     def get_tersedia(self, obj):
         return any(available_for_variant(v) > 0 for v in obj.varian.all())

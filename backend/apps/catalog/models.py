@@ -1,5 +1,6 @@
 import secrets
 
+from django.conf import settings
 from django.db import models
 
 
@@ -154,3 +155,50 @@ class FotoProduk(models.Model):
     class Meta:
         ordering = ["urutan", "id"]
         verbose_name_plural = "foto produk"
+
+
+class Ulasan(models.Model):
+    """Ulasan produk oleh pembeli terverifikasi; satu ulasan per user per produk."""
+
+    produk = models.ForeignKey(Produk, on_delete=models.CASCADE, related_name="ulasan")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="ulasan"
+    )
+    rating = models.PositiveSmallIntegerField()
+    teks = models.CharField(max_length=1000, blank=True)
+    # Ulasan langsung tampil; admin bisa menyembunyikan lewat moderasi.
+    tampil = models.BooleanField(default=True)
+    dibuat = models.DateTimeField(auto_now_add=True)
+    diperbarui = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-dibuat", "-id"]
+        verbose_name_plural = "ulasan"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["produk", "user"], name="ulasan_unik_per_produk"
+            ),
+            models.CheckConstraint(
+                condition=models.Q(rating__gte=1, rating__lte=5),
+                name="ulasan_rating_1_5",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.produk_id}:{self.user_id}"
+
+
+class PanduanUkuran(models.Model):
+    """Tabel panduan ukuran per kategori; baris pertama adalah header."""
+
+    kategori = models.OneToOneField(
+        Kategori, on_delete=models.CASCADE, related_name="panduan_ukuran"
+    )
+    tabel = models.JSONField(default=list)
+    diperbarui = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = "panduan ukuran"
+
+    def __str__(self):
+        return self.kategori.nama
