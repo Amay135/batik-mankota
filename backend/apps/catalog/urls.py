@@ -4,6 +4,7 @@ from . import views
 
 urlpatterns = [
     path("kategori/", views.KategoriListView.as_view()),
+    path("motif/", views.MotifListView.as_view()),
     path("produk/", views.ProdukListView.as_view()),
     path("produk/<slug:slug>/", views.ProdukDetailView.as_view()),
     # Pengelolaan katalog (admin + 2FA). Rute terpisah agar path publik tetap AllowAny-free.

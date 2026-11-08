@@ -1,3 +1,4 @@
+from django.core.cache import cache
 from django.db.models import Count, Exists, Max, Min, OuterRef, Prefetch, Q
 from django.db.models.deletion import ProtectedError
 from django.http import HttpResponse
@@ -29,11 +30,13 @@ from .models import FotoProduk, Kategori, Motif, Produk, Varian
 from .qr import qr_png, qr_svg, render_label_pdf
 from .serializers import (
     DaftarKategoriSerializer,
+    DaftarMotifSerializer,
     FotoAdminSerializer,
     KategoriAdminSerializer,
     KategoriSerializer,
     LabelCetakSerializer,
     MotifAdminSerializer,
+    MotifSerializer,
     ProdukAdminSerializer,
     ProdukDetailSerializer,
     ProdukDetailTamuSerializer,
@@ -41,6 +44,8 @@ from .serializers import (
     UnggahFotoSerializer,
     VarianAdminSerializer,
 )
+
+CACHE_TAMU_DETIK = 60
 
 URUTAN = {
     "populer": ("-terjual", "id"),
@@ -68,6 +73,33 @@ class KatalogPagination(PageNumberPagination):
             }
         )
 
+    def get_paginated_response_schema(self, schema):
+        return {
+            "type": "object",
+            "required": [
+                "jumlah",
+                "halaman",
+                "per_halaman",
+                "total_halaman",
+                "dari",
+                "sampai",
+                "hasil",
+            ],
+            "properties": {
+                "jumlah": {"type": "integer"},
+                "halaman": {"type": "integer"},
+                "per_halaman": {"type": "integer"},
+                "total_halaman": {"type": "integer"},
+                "dari": {"type": "integer"},
+                "sampai": {"type": "integer"},
+                "hasil": schema,
+            },
+        }
+
+
+def _kunci_cache_tamu(request):
+    return f"katalog:{services.versi_katalog()}:{request.get_full_path()}"
+
 
 def produk_aktif():
     return Produk.objects.filter(aktif=True)
@@ -84,6 +116,10 @@ class ProdukListView(ListAPIView):
 
         if kategori := p.get("kategori"):
             qs = qs.filter(kategori__slug=kategori)
+        if motif := p.getlist("motif"):
+            qs = qs.filter(motif__slug__in=motif)
+        if p.get("unggulan") in ("1", "true"):
+            qs = qs.filter(unggulan=True)
         if q := p.get("q", "").strip():
             qs = qs.filter(
                 Q(nama__icontains=q)
@@ -109,6 +145,12 @@ class ProdukListView(ListAPIView):
         return qs.order_by(*URUTAN.get(p.get("urut", "populer"), URUTAN["populer"]))
 
     def list(self, request, *args, **kwargs):
+        kunci = None
+        if not request.user.is_authenticated:
+            kunci = _kunci_cache_tamu(request)
+            if (tersimpan := cache.get(kunci)) is not None:
+                return Response(tersimpan)
+
         resp = super().list(request, *args, **kwargs)
         semua = produk_aktif()
         harga = semua.aggregate(minimum=Min("harga"), maksimum=Max("harga"))
@@ -121,6 +163,8 @@ class ProdukListView(ListAPIView):
             "harga_min": harga["minimum"] or 0,
             "harga_maks": harga["maksimum"] or 0,
         }
+        if kunci:
+            cache.set(kunci, resp.data, CACHE_TAMU_DETIK)
         return resp
 
 
@@ -134,6 +178,18 @@ class KategoriListView(APIView):
         ).order_by("urutan", "id")
         data = KategoriSerializer(qs, many=True).data
         return Response({"total": produk_aktif().count(), "kategori": data})
+
+
+class MotifListView(APIView):
+    permission_classes = [AllowAny]
+
+    @extend_schema(responses=DaftarMotifSerializer)
+    def get(self, request):
+        qs = Motif.objects.annotate(
+            jumlah=Count("produk", filter=Q(produk__aktif=True))
+        ).order_by("nama")
+        data = MotifSerializer(qs, many=True).data
+        return Response({"total": produk_aktif().count(), "motif": data})
 
 
 class ProdukDetailView(RetrieveAPIView):
@@ -151,9 +207,24 @@ class ProdukDetailView(RetrieveAPIView):
             .select_related("kategori", "motif")
             .prefetch_related(
                 "foto",
-                Prefetch("varian", queryset=Varian.objects.select_related("stock")),
+                Prefetch(
+                    "varian",
+                    queryset=Varian.objects.filter(aktif=True).select_related("stock"),
+                ),
             )
         )
+
+    def retrieve(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            return super().retrieve(request, *args, **kwargs)
+
+        kunci = _kunci_cache_tamu(request)
+        if (tersimpan := cache.get(kunci)) is not None:
+            return Response(tersimpan)
+
+        resp = super().retrieve(request, *args, **kwargs)
+        cache.set(kunci, resp.data, CACHE_TAMU_DETIK)
+        return resp
 
 
 # --- Pengelolaan (admin): /api/v1/katalog/kelola/ ---
