@@ -3,9 +3,26 @@ from django.db.models.signals import post_delete, post_save
 from apps.inventory.models import Stock
 
 from . import services
-from .models import FotoProduk, Kategori, Motif, Produk, Varian
+from .models import (
+    FotoProduk,
+    Kategori,
+    Motif,
+    PanduanUkuran,
+    Produk,
+    Ulasan,
+    Varian,
+)
 
-_MODEL_KATALOG = (Produk, Varian, FotoProduk, Kategori, Motif, Stock)
+_MODEL_KATALOG = (
+    Produk,
+    Varian,
+    FotoProduk,
+    Kategori,
+    Motif,
+    Stock,
+    Ulasan,
+    PanduanUkuran,
+)
 
 
 def _segarkan(sender, **kwargs):

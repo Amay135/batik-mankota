@@ -11,6 +11,8 @@ class AuditLog(models.Model):
         ROLE_CHANGE = "role_change", "Ubah role"
         ADMIN_LOGIN = "admin_login", "Login admin"
         OTP_RESET = "otp_reset", "Reset 2FA"
+        REVIEW_MODERATE = "review_moderate", "Moderasi ulasan"
+        SIZE_GUIDE_CHANGE = "size_guide_change", "Ubah panduan ukuran"
 
     actor = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="audit_log"

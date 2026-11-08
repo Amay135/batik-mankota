@@ -105,7 +105,39 @@ def _katalog(path, methods):
     ]
 
 
+def _katalog_fitur(path, methods, *, id_, rujukan):
+    # ADM-15/16 = fitur katalog lanjutan (ADR-7 Katalog kelola).
+    return [
+        {
+            "id": id_,
+            "rujukan": rujukan,
+            "fase": 1,
+            "method": method,
+            "path": f"/api/v1/katalog/kelola/{path}",
+            "roles": ("admin",),
+            "requires_2fa": True,
+        }
+        for method in methods
+    ]
+
+
 ADMIN_CAPABILITIES += [
+    *_katalog_fitur("ulasan/", ("GET",), id_="ADM-15", rujukan="PRD F-EC-08; F-LP-05"),
+    *_katalog_fitur(
+        "ulasan/<int:pk>/",
+        ("GET", "PUT", "PATCH"),
+        id_="ADM-15",
+        rujukan="PRD F-EC-08; F-LP-05",
+    ),
+    *_katalog_fitur(
+        "panduan-ukuran/", ("GET", "POST"), id_="ADM-16", rujukan="PRD F-LP-05"
+    ),
+    *_katalog_fitur(
+        "panduan-ukuran/<int:pk>/",
+        ("GET", "PUT", "PATCH", "DELETE"),
+        id_="ADM-16",
+        rujukan="PRD F-LP-05",
+    ),
     *_katalog("kategori/", ("GET", "POST")),
     *_katalog("kategori/<int:pk>/", ("GET", "PUT", "PATCH", "DELETE")),
     *_katalog("motif/", ("GET", "POST")),

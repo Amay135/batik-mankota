@@ -1,4 +1,5 @@
 from django.core.cache import cache
+from django.db import IntegrityError, transaction
 from django.db.models import Count, Exists, Max, Min, OuterRef, Prefetch, Q
 from django.db.models.deletion import ProtectedError
 from django.http import HttpResponse
@@ -11,6 +12,7 @@ from rest_framework.generics import (
     ListAPIView,
     ListCreateAPIView,
     RetrieveAPIView,
+    RetrieveUpdateAPIView,
     RetrieveUpdateDestroyAPIView,
 )
 
@@ -20,13 +22,13 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsAdmin
+from apps.accounts.permissions import IsAdmin, IsUser
 from apps.accounts.serializers import GalatSerializer
 from apps.accounts.services import client_ip
 from apps.inventory.selectors import available_stocks
 
 from . import services
-from .models import FotoProduk, Kategori, Motif, Produk, Varian
+from .models import FotoProduk, Kategori, Motif, PanduanUkuran, Produk, Ulasan, Varian
 from .qr import qr_png, qr_svg, render_label_pdf
 from .serializers import (
     DaftarKategoriSerializer,
@@ -37,10 +39,14 @@ from .serializers import (
     LabelCetakSerializer,
     MotifAdminSerializer,
     MotifSerializer,
+    PanduanUkuranAdminSerializer,
     ProdukAdminSerializer,
     ProdukDetailSerializer,
     ProdukDetailTamuSerializer,
     ProdukListSerializer,
+    UlasanAdminSerializer,
+    UlasanSerializer,
+    UlasanTulisSerializer,
     UnggahFotoSerializer,
     VarianAdminSerializer,
 )
@@ -204,12 +210,16 @@ class ProdukDetailView(RetrieveAPIView):
     def get_queryset(self):
         return (
             produk_aktif()
-            .select_related("kategori", "motif")
+            .select_related("kategori__panduan_ukuran", "motif")
             .prefetch_related(
                 "foto",
                 Prefetch(
                     "varian",
                     queryset=Varian.objects.filter(aktif=True).select_related("stock"),
+                ),
+                Prefetch(
+                    "ulasan",
+                    queryset=Ulasan.objects.filter(tampil=True).select_related("user"),
                 ),
             )
         )
@@ -225,6 +235,65 @@ class ProdukDetailView(RetrieveAPIView):
         resp = super().retrieve(request, *args, **kwargs)
         cache.set(kunci, resp.data, CACHE_TAMU_DETIK)
         return resp
+
+
+class UlasanTulisView(APIView):
+    permission_classes = [IsUser]
+
+    @extend_schema(request=UlasanTulisSerializer, responses={201: UlasanSerializer})
+    def post(self, request, slug):
+        produk = get_object_or_404(Produk, slug=slug, aktif=True)
+        data = UlasanTulisSerializer(data=request.data)
+        data.is_valid(raise_exception=True)
+        if not services.sudah_membeli(request.user, produk):
+            return Response(
+                {
+                    "code": "BELUM_MEMBELI",
+                    "message": "Ulasan hanya untuk pembeli produk ini.",
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        try:
+            with transaction.atomic():
+                ulasan = Ulasan.objects.create(
+                    produk=produk, user=request.user, **data.validated_data
+                )
+                services.perbarui_ringkasan_ulasan(produk)
+        except IntegrityError:
+            return Response(
+                {
+                    "code": "ULASAN_SUDAH_ADA",
+                    "message": "Anda sudah mengulas produk ini.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return Response(UlasanSerializer(ulasan).data, status=status.HTTP_201_CREATED)
+
+
+class UlasanSendiriView(APIView):
+    permission_classes = [IsUser]
+
+    def _ambil(self, request, pk):
+        return get_object_or_404(Ulasan, pk=pk, user=request.user)
+
+    @extend_schema(request=UlasanTulisSerializer, responses=UlasanSerializer)
+    def patch(self, request, pk):
+        ulasan = self._ambil(request, pk)
+        data = UlasanTulisSerializer(ulasan, data=request.data, partial=True)
+        data.is_valid(raise_exception=True)
+        with transaction.atomic():
+            ulasan = data.save()
+            services.perbarui_ringkasan_ulasan(ulasan.produk)
+        return Response(UlasanSerializer(ulasan).data)
+
+    @extend_schema(responses={204: None})
+    def delete(self, request, pk):
+        ulasan = self._ambil(request, pk)
+        produk = ulasan.produk
+        with transaction.atomic():
+            ulasan.delete()
+            services.perbarui_ringkasan_ulasan(produk)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 # --- Pengelolaan (admin): /api/v1/katalog/kelola/ ---
@@ -426,3 +495,69 @@ class LabelCetakView(APIView):
         response = HttpResponse(pdf, content_type="application/pdf")
         response["Content-Disposition"] = 'attachment; filename="label.pdf"'
         return response
+
+
+class UlasanAdminListView(ListAPIView):
+    permission_classes = [IsAdmin]
+    queryset = Ulasan.objects.select_related("produk", "user")
+    serializer_class = UlasanAdminSerializer
+
+
+class UlasanAdminDetailView(RetrieveUpdateAPIView):
+    permission_classes = [IsAdmin]
+    queryset = Ulasan.objects.select_related("produk", "user")
+    serializer_class = UlasanAdminSerializer
+
+    def perform_update(self, serializer):
+        tampil_lama = serializer.instance.tampil
+        ulasan = serializer.save()
+        if ulasan.tampil == tampil_lama:
+            return
+        services.catat_moderasi_ulasan(
+            actor=self.request.user,
+            ulasan=ulasan,
+            before={"tampil": tampil_lama},
+            ip=client_ip(self.request),
+        )
+        services.perbarui_ringkasan_ulasan(ulasan.produk)
+
+
+class PanduanUkuranAdminListCreateView(ListCreateAPIView):
+    permission_classes = [IsAdmin]
+    queryset = PanduanUkuran.objects.select_related("kategori")
+    serializer_class = PanduanUkuranAdminSerializer
+
+    def perform_create(self, serializer):
+        panduan = serializer.save()
+        services.catat_panduan_ukuran(
+            actor=self.request.user,
+            entity_id=panduan.pk,
+            after={"tabel": panduan.tabel},
+            ip=client_ip(self.request),
+        )
+
+
+class PanduanUkuranAdminDetailView(RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAdmin]
+    queryset = PanduanUkuran.objects.select_related("kategori")
+    serializer_class = PanduanUkuranAdminSerializer
+
+    def perform_update(self, serializer):
+        tabel_lama = serializer.instance.tabel
+        panduan = serializer.save()
+        services.catat_panduan_ukuran(
+            actor=self.request.user,
+            entity_id=panduan.pk,
+            before={"tabel": tabel_lama},
+            after={"tabel": panduan.tabel},
+            ip=client_ip(self.request),
+        )
+
+    def perform_destroy(self, instance):
+        services.catat_panduan_ukuran(
+            actor=self.request.user,
+            entity_id=instance.pk,
+            before={"tabel": instance.tabel},
+            ip=client_ip(self.request),
+        )
+        instance.delete()

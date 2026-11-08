@@ -1,8 +1,10 @@
+from decimal import ROUND_HALF_UP, Decimal
 from io import BytesIO
 from uuid import uuid4
 
 from django.core.cache import cache
 from django.core.files.base import ContentFile
+from django.db.models import Avg, Count
 from PIL import Image, UnidentifiedImageError
 from rest_framework.exceptions import ValidationError
 
@@ -50,6 +52,53 @@ def catat_perubahan_harga_beli(*, actor, varian, harga_lama, ip=None):
         entity_id=varian.pk,
         before={"harga_beli": harga_lama},
         after={"harga_beli": varian.harga_beli},
+        ip=ip,
+    )
+
+
+def sudah_membeli(user, produk) -> bool:
+    """PRD F-EC-08: ulasan hanya untuk pembeli dengan pesanan selesai."""
+    # Import lokal agar modul katalog tidak bergantung pada orders saat dimuat.
+    from apps.orders.models import Pesanan
+
+    return Pesanan.objects.filter(
+        user=user,
+        status=Pesanan.Status.SELESAI,
+        item__varian__produk=produk,
+    ).exists()
+
+
+def perbarui_ringkasan_ulasan(produk):
+    agregat = produk.ulasan.filter(tampil=True).aggregate(
+        rata=Avg("rating"), jumlah=Count("pk")
+    )
+    produk.rating = Decimal(agregat["rata"] or 0).quantize(
+        Decimal("0.1"), rounding=ROUND_HALF_UP
+    )
+    produk.jumlah_ulasan = agregat["jumlah"]
+    produk.save(update_fields=["rating", "jumlah_ulasan"])
+
+
+def catat_moderasi_ulasan(*, actor, ulasan, before, ip=None):
+    catat(
+        actor=actor,
+        action=AuditLog.Action.REVIEW_MODERATE,
+        entity="ulasan",
+        entity_id=ulasan.pk,
+        before=before,
+        after={"tampil": ulasan.tampil},
+        ip=ip,
+    )
+
+
+def catat_panduan_ukuran(*, actor, entity_id, before=None, after=None, ip=None):
+    catat(
+        actor=actor,
+        action=AuditLog.Action.SIZE_GUIDE_CHANGE,
+        entity="panduan_ukuran",
+        entity_id=entity_id,
+        before=before,
+        after=after,
         ip=ip,
     )
 
