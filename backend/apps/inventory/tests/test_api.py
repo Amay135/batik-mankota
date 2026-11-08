@@ -349,7 +349,7 @@ def test_id_registry_route_stok_sesuai_kesepakatan():
     peta = {(e["path"], e["method"]): e["id"] for e in ADMIN_CAPABILITIES}
     assert peta[("/api/v1/stok/", "GET")] == "ADM-12"
     assert peta[("/api/v1/stok/mutasi/", "GET")] == "ADM-12"
-    assert peta[("/api/v1/stok/penyesuaian/", "POST")] == "ADM-12"
+    assert peta[("/api/v1/stok/penyesuaian/", "POST")] == "ADM-13"
     assert peta[("/api/v1/stok/opname/", "POST")] == "ADM-13"
     assert peta[("/api/v1/stok/opname/<int:pk>/", "GET")] == "ADM-13"
     assert peta[("/api/v1/stok/opname/<int:pk>/terapkan/", "POST")] == "ADM-13"

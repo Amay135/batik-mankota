@@ -2,6 +2,7 @@ from django.utils.html import strip_tags
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
+from apps.accounts.permissions import admin_verified
 from apps.inventory.selectors import available_for_variant
 
 from .models import FotoProduk, Kategori, Motif, PanduanUkuran, Produk, Ulasan, Varian
@@ -17,8 +18,13 @@ def status_stok(stok):
 
 
 def boleh_stok_angka(request):
-    """PRD 5.10: angka stok persis hanya untuk admin dan kasir."""
-    return bool(request and getattr(request.user, "role", None) in ("admin", "kasir"))
+    """PRD 5.10: angka stok persis hanya untuk admin dengan 2FA dan kasir."""
+    user = getattr(request, "user", None)
+    if not user or not user.is_authenticated:
+        return False
+    if user.role == "kasir":
+        return True
+    return user.role == "admin" and admin_verified(request)
 
 
 def url_foto(foto, request):
