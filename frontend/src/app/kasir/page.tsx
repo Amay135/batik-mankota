@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useState } from "react";
 import PanelKeranjang from "@/components/kasir/panel-keranjang";
 import PanelProduk from "@/components/kasir/panel-produk";
+import { namaTampil, usePengguna } from "@/components/kasir/pengguna-context";
 import type { CartLine } from "@/components/kasir/data";
 
 export default function KasirPage() {
+  const status = usePengguna();
   const [cart, setCart] = useState<CartLine[]>([
     { id: 1, qty: 1 },
     { id: 2, qty: 1 },
@@ -26,21 +28,21 @@ export default function KasirPage() {
 
   return (
     <main className="flex-1 px-8 pb-3 pt-6">
-      <h1 className="mb-1 font-serif text-[26px] font-normal">Kasir &amp; Penjualan</h1>
-      <p className="mb-4 text-[#8a7f73]">
+      <h1 className="mb-1 text-[26px] font-normal">Kasir &amp; Penjualan</h1>
+      <p className="mb-4 text-tinta-lembut">
         Transaksi cepat, perayaan hangat. Semua penjualan tercatat di satu tempat.
       </p>
 
-      <div className="mb-[18px] flex items-center justify-between border-y border-[#e8dfcf] px-1 py-2.5 text-[11px] text-[#8a7f73]">
+      <div className="mb-[18px] flex items-center justify-between border-y border-garis px-1 py-2.5 text-[11px] text-tinta-lembut">
         <span>
           Shift aktif{" "}
-          <b className="ml-2.5 font-medium text-[#2b2420]">
-            Kasir: Ayu Pramesti · Dibuka 09.00 WIB · Saldo awal Rp500.000
+          <b className="ml-2.5 font-medium text-tinta">
+            Kasir: {namaTampil(status)} · Dibuka 09.00 WIB · Saldo awal Rp500.000
           </b>
         </span>
-        <span className="flex gap-[22px] text-[#2b2420]">
+        <span className="flex gap-[22px] text-tinta">
           <Link href="/kasir/riwayat">Riwayat transaksi</Link>
-          <span className="font-medium text-[#6b2430]">Tutup shift →</span>
+          <span className="font-medium text-marun">Tutup shift →</span>
         </span>
       </div>
 

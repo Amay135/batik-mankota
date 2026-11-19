@@ -53,7 +53,7 @@ export default function PanelProduk({ onAdd }: { onAdd: (id: number) => void }) 
       </div>
 
       <div className="mb-2.5 flex justify-between text-[10.5px] text-[#8a7f73]">
-        <span>48 produk tersedia</span>
+        <span>{products.length} produk tersedia</span>
         <span>Harga retail · Cabang Laweyan</span>
       </div>
 
