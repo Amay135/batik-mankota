@@ -1,9 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { rupiah } from "@/lib/format";
 import { DISCOUNTS, PAYMENTS, PRODUCTS, type CartLine } from "./data";
 import { Chevron, PrinterIcon, UserIcon } from "./icons";
+import ModalPembayaran from "./modal-pembayaran";
+import { namaTampil, usePengguna } from "./pengguna-context";
+import { useRiwayat, type Transaksi } from "./riwayat-context";
 
 type Props = {
   cart: CartLine[];
@@ -17,9 +21,15 @@ const fieldCls =
   "h-[34px] w-full rounded-md border border-[#e8dfcf] bg-white px-2 text-[11px] text-[#2b2420]";
 
 export default function PanelKeranjang({ cart, onChangeQty, onRemove, onClear }: Props) {
+  const router = useRouter();
+  const status = usePengguna();
+  const { nomorBerikut, tambah } = useRiwayat();
+
   const [discountPct, setDiscountPct] = useState(5);
   const [payment, setPayment] = useState("Tunai");
   const [cash, setCash] = useState(800000);
+  const [trx, setTrx] = useState<Transaksi | null>(null);
+  const [dibayar, setDibayar] = useState(false);
 
   const items = cart.flatMap((c) => {
     const p = PRODUCTS.find((x) => x.id === c.id);
@@ -27,15 +37,58 @@ export default function PanelKeranjang({ cart, onChangeQty, onRemove, onClear }:
   });
   const totalQty = items.reduce((a, i) => a + i.qty, 0);
   const subtotal = items.reduce((a, i) => a + i.price * i.qty, 0);
-  const discount = (subtotal * discountPct) / 100;
+  // Rupiah bulat. Angka resmi nanti dihitung backend; ini hanya tampilan.
+  const discount = Math.round((subtotal * discountPct) / 100);
   const total = subtotal - discount;
   const change = Math.max(0, cash - total);
+
+  const cashKurang = payment === "Tunai" && cash < total;
+  const canPay = items.length > 0 && !cashKurang;
+
+  function bayar() {
+    if (trx) return;
+    const baru: Transaksi = {
+      nomor: nomorBerikut,
+      waktu: new Date().toISOString(),
+      kasir: namaTampil(status),
+      metode: payment,
+      items: items.map(({ id, name, qty, price }) => ({ id, name, qty, price })),
+      subtotal,
+      discountPct,
+      discount,
+      total,
+      cash: payment === "Tunai" ? cash : total,
+      change: payment === "Tunai" ? change : 0,
+    };
+    setTrx(baru);
+    if (payment === "QRIS") {
+      setDibayar(false); // tunggu konfirmasi QRIS
+    } else {
+      tambah(baru); // Tunai dan Debit langsung tercatat
+      setDibayar(true);
+    }
+  }
+
+  function konfirmasiQris() {
+    if (!trx) return;
+    const final = { ...trx, waktu: new Date().toISOString() };
+    tambah(final);
+    setTrx(final);
+    setDibayar(true);
+  }
+
+  function selesai() {
+    setTrx(null);
+    setDibayar(false);
+    onClear();
+    router.push("/kasir/riwayat");
+  }
 
   return (
     <aside className="rounded-[10px] border border-[#e8dfcf] bg-white p-4">
       <div className="mb-3 flex items-baseline justify-between">
         <h2 className="text-[13px] font-semibold">Keranjang Transaksi</h2>
-        <span className="text-[9px] text-[#8a7f73]">#TRX-0328</span>
+        <span className="text-[9px] text-[#8a7f73]">{nomorBerikut}</span>
       </div>
 
       <button className="flex w-full cursor-pointer items-center gap-2 rounded-[7px] border border-[#e8dfcf] bg-white px-2.5 py-[9px] text-left text-[11.5px] text-[#2b2420]">
@@ -133,18 +186,35 @@ export default function PanelKeranjang({ cart, onChangeQty, onRemove, onClear }:
         value={rupiah(cash)}
         onChange={(e) => setCash(Number(e.target.value.replace(/\D/g, "")) || 0)}
       />
+      {cashKurang && items.length > 0 && (
+        <div className="mt-1 text-[10px] text-[#6b2430]">Uang diterima kurang {rupiah(total - cash)}</div>
+      )}
       <div className="mb-3.5 mt-3 flex items-center justify-between text-[11px]">
         <span>Kembalian</span>
         <b className="text-[13px]">{rupiah(change)}</b>
       </div>
 
-      <button className="flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-[7px] border-0 bg-[#6b2430] text-[12.5px] font-semibold text-white hover:bg-[#5a1d28]">
+      <button
+        disabled={!canPay}
+        onClick={bayar}
+        className="flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-[7px] border-0 bg-[#6b2430] text-[12.5px] font-semibold text-white hover:bg-[#5a1d28] disabled:cursor-not-allowed disabled:opacity-60"
+      >
         <PrinterIcon size={17} /> Bayar &amp; Cetak Struk
       </button>
       <div className="mt-3 flex justify-between">
         <button className="cursor-pointer border-0 bg-transparent p-0 text-[10px] text-[#8a7f73]">Simpan transaksi</button>
         <button className="cursor-pointer border-0 bg-transparent p-0 text-[10px] font-medium text-[#2b2420]" onClick={onClear}>Batalkan</button>
       </div>
+
+      {trx && (
+        <ModalPembayaran
+          trx={trx}
+          dibayar={dibayar}
+          onKonfirmasiQris={konfirmasiQris}
+          onClose={() => setTrx(null)}
+          onSelesai={selesai}
+        />
+      )}
     </aside>
   );
 }
