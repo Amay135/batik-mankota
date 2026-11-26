@@ -29,8 +29,9 @@ export function FormAuth({ mode }: { mode: "masuk" | "daftar" }) {
         method: "POST",
         body: daftar ? f : { email: f.email, password: f.password },
       });
-      // Admin langsung ke dashboard; guard di sana mengarahkan ke verifikasi 2FA bila belum.
-      router.replace(pengguna.role === "admin" ? "/dashboard" : next);
+      const tujuan =
+        pengguna.role === "admin" ? "/dashboard" : pengguna.role === "kasir" ? "/kasir" : next;
+      router.replace(tujuan);
       router.refresh();
     } catch (err) {
       setGalat(galatPerField(err));
