@@ -1,9 +1,5 @@
-import type { Metadata } from "next";
-
-import { OpnameDasbor } from "@/components/dasbor/opname";
-
-export const metadata: Metadata = { title: "Opname" };
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <OpnameDasbor />;
+  redirect("/dashboard/inventaris?tab=opname");
 }

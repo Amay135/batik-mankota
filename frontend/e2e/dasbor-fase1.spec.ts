@@ -49,9 +49,9 @@ test("ADM-10 produk: daftar, tambah produk + varian, galat SKU duplikat", async 
 
 test("ADM-11 label QR: pratinjau, unduh PDF, galat produk tanpa varian", async ({ page }) => {
   await masukAdmin(page);
-  await page.goto("/dashboard/label?produk=1");
+  await page.goto("/dashboard/inventaris?tab=label&produk=1");
 
-  await expect(page.getByRole("heading", { name: "Label QR" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Label QR" })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByAltText("QR PARANG-M")).toBeVisible();
 
   const [download] = await Promise.all([
@@ -69,9 +69,10 @@ test("ADM-11 label QR: pratinjau, unduh PDF, galat produk tanpa varian", async (
 
 test("ADM-12 stok: penyesuaian berhasil, galat stok tidak cukup, riwayat mutasi", async ({ page }) => {
   await masukAdmin(page);
-  await page.goto("/dashboard/stok");
+  await page.goto("/dashboard/inventaris?tab=stok");
 
-  await expect(page.getByRole("heading", { name: "Stok", exact: true })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Stok", exact: true })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("heading", { name: "Stok per varian" })).toBeVisible();
   const baris = page.getByRole("row", { name: /PARANG-L/ });
   await expect(baris).toBeVisible();
   await expect(baris.getByRole("cell").nth(4)).toHaveText("2");
@@ -92,7 +93,7 @@ test("ADM-12 stok: penyesuaian berhasil, galat stok tidak cukup, riwayat mutasi"
   await expect(galat.getByText("Stok tidak mencukupi.")).toBeVisible();
   await galat.getByRole("button", { name: "Batal" }).click();
 
-  await page.getByRole("tab", { name: "Riwayat mutasi" }).click();
+  await page.getByRole("tab", { name: "Mutasi Stok" }).click();
   await expect(page.getByRole("row", { name: /Penyesuaian/ })).toBeVisible();
 
   await page.screenshot({ path: "e2e/screenshots/adm-12.png", fullPage: true });
@@ -100,9 +101,10 @@ test("ADM-12 stok: penyesuaian berhasil, galat stok tidak cukup, riwayat mutasi"
 
 test("ADM-13 opname: buat sesi, terapkan, validasi hitungan", async ({ page }) => {
   await masukAdmin(page);
-  await page.goto("/dashboard/opname");
+  await page.goto("/dashboard/inventaris?tab=opname");
 
-  await expect(page.getByRole("heading", { name: "Opname" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Opname" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("heading", { name: "Pilih varian" })).toBeVisible();
   await page.getByRole("row", { name: /PARANG-M/ }).getByRole("button", { name: "Tambah" }).click();
   await page.getByLabel("Jumlah fisik PARANG-M").fill("12");
   await page.getByLabel("Catatan sesi").fill("Cek bulanan");
@@ -127,9 +129,10 @@ test("ADM-13 opname: buat sesi, terapkan, validasi hitungan", async ({ page }) =
 
 test("ADM-14 stok menipis: daftar, galat alasan, ubah minimum", async ({ page }) => {
   await masukAdmin(page);
-  await page.goto("/dashboard/stok-menipis");
+  await page.goto("/dashboard/inventaris?tab=menipis");
 
-  await expect(page.getByRole("heading", { name: "Stok Menipis", exact: true })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Stok Menipis" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("heading", { name: "Daftar stok menipis" })).toBeVisible();
   const baris = page.getByRole("row", { name: /PARANG-L/ });
   await expect(baris).toBeVisible();
 
@@ -214,4 +217,20 @@ test("ADM-16 panduan ukuran: ubah tabel, galat server, hapus", async ({ page }) 
   await expect(barisWanita).toHaveCount(0);
 
   await page.screenshot({ path: "e2e/screenshots/adm-16.png", fullPage: true });
+});
+
+test("rute inventaris lama dialihkan ke tab yang tepat", async ({ page }) => {
+  await masukAdmin(page);
+  const rute = [
+    ["/dashboard/stok", "Stok"],
+    ["/dashboard/stok-menipis", "Stok Menipis"],
+    ["/dashboard/opname", "Opname"],
+    ["/dashboard/label?produk=1", "Label QR"],
+  ] as const;
+
+  for (const [lama, tab] of rute) {
+    await page.goto(lama);
+    await expect(page).toHaveURL(/\/dashboard\/inventaris\?tab=/);
+    await expect(page.getByRole("tab", { name: tab, exact: true })).toHaveAttribute("aria-selected", "true");
+  }
 });

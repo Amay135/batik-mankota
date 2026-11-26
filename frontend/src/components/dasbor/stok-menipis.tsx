@@ -126,13 +126,6 @@ export function StokMenipis() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl">Stok Menipis</h1>
-        <p className="mt-1 text-[12px] text-dash-text-muted">
-          Varian dengan stok tersedia sama dengan atau di bawah stok minimum.
-        </p>
-      </header>
-
       <section className="panel-dasbor" aria-label="Filter stok menipis">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div>

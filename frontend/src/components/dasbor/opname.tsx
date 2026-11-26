@@ -129,13 +129,6 @@ export function OpnameDasbor() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl">Opname</h1>
-        <p className="mt-1 text-[12px] text-dash-text-muted">
-          Hitung fisik stok per varian, periksa selisih dari API, lalu terapkan.
-        </p>
-      </header>
-
       {sesi ? (
         <section className="panel-dasbor" aria-labelledby="judul-sesi">
           <div className="flex flex-wrap items-center justify-between gap-3">

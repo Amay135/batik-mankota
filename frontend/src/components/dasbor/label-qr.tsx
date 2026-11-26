@@ -86,13 +86,6 @@ export function LabelQr({ awalProduk, awalVarian }: { awalProduk?: string; awalV
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl">Label QR</h1>
-        <p className="mt-1 text-[12px] text-dash-text-muted">
-          Cetak label QR per varian atau seluruh varian aktif sebuah produk.
-        </p>
-      </header>
-
       <section className="panel-dasbor" aria-labelledby="judul-pilihan-cetak">
         <h2 id="judul-pilihan-cetak" className="font-sans text-[13px] font-semibold">Pilihan cetak</h2>
         {produk === null ? (
