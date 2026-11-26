@@ -19,14 +19,24 @@ async function masukAdmin(page: Page) {
   await page.waitForURL("**/dashboard");
 }
 
-test("admin: login, TOTP, menu fase 0, kelola akun", async ({ page }) => {
+test("admin: login, TOTP, menu fase 1, kelola akun", async ({ page }) => {
   await masukAdmin(page);
 
-  await expect(page.locator("[data-menu-id]")).toHaveCount(2);
+  await expect(page.locator("[data-menu-id]")).toHaveCount(9);
   const id = await page
     .locator("[data-menu-id]")
     .evaluateAll((els) => els.map((e) => e.getAttribute("data-menu-id")));
-  expect(id).toEqual(["ADM-01", "ADM-03"]);
+  expect(id).toEqual([
+    "ADM-01",
+    "ADM-03",
+    "ADM-10",
+    "ADM-11",
+    "ADM-12",
+    "ADM-13",
+    "ADM-14",
+    "ADM-15",
+    "ADM-16",
+  ]);
 
   await page.getByLabel("Nama lengkap").fill("Kasir Baru");
   await page.getByLabel("Email").fill("kasir.baru@mankota.id");
@@ -60,8 +70,13 @@ test("admin tanpa TOTP diarahkan ke setup", async ({ page }) => {
   await page.waitForURL("**/verifikasi-2fa");
 
   await page.getByRole("button", { name: "Mulai setup 2FA" }).click();
-  await expect(page.locator('svg[aria-label="Kode QR setup 2FA"]')).toBeVisible();
-  await expect(page.getByText("JBSWY3DPEHPK3PXP")).toBeVisible();
+  const qr = page.locator('svg[aria-label="Kode QR setup 2FA"]');
+  await expect(qr).toBeVisible();
+  await expect(qr).toHaveAttribute(
+    "data-otpauth-uri",
+    "otpauth://totp/Mankota:admin2%40mankota.id?secret=JBSWY3DPEHPK3PXP&issuer=Mankota",
+  );
+  await expect(page.getByText("JBSW Y3DP EHPK 3PXP")).toBeVisible();
 
   await page.screenshot({ path: "e2e/screenshots/sec-01.png", fullPage: true });
 });

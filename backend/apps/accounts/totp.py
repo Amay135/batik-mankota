@@ -20,6 +20,17 @@ def _key(secret: str) -> bytes:
     return base64.b32decode(padded)
 
 
+def is_valid_secret(secret: str) -> bool:
+    """Secret harus base32; data lama non-base32 tidak akan pernah cocok."""
+    if not secret:
+        return False
+    try:
+        _key(secret)
+    except ValueError:
+        return False
+    return True
+
+
 def code_at(secret: str, timestamp: float | None = None) -> str:
     counter = int((time.time() if timestamp is None else timestamp) // STEP)
     digest = hmac.new(_key(secret), struct.pack(">Q", counter), hashlib.sha1).digest()
@@ -30,7 +41,7 @@ def code_at(secret: str, timestamp: float | None = None) -> str:
 
 def verify(secret: str, code: str, window: int = 1) -> bool:
     code = (code or "").strip()
-    if not secret or len(code) != DIGITS or not code.isdigit():
+    if not is_valid_secret(secret) or len(code) != DIGITS or not code.isdigit():
         return False
     now = time.time()
     return any(
@@ -48,6 +59,7 @@ def provisioning_uri(secret: str, email: str) -> str:
             "algorithm": "SHA1",
             "digits": DIGITS,
             "period": STEP,
-        }
+        },
+        quote_via=quote,  # spasi jadi %20, bukan + (form encoding)
     )
     return f"otpauth://totp/{label}?{params}"

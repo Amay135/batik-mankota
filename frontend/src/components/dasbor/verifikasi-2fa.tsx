@@ -61,6 +61,9 @@ export function Verifikasi2fa({ sudahTerdaftar }: { sudahTerdaftar: boolean }) {
           setPesan("Terlalu banyak percobaan. Coba lagi dalam satu menit.");
         } else if (err.status === 409 || kodeGalat === "TOTP_ALREADY_ENROLLED") {
           setPesan("2FA sudah aktif. Muat ulang halaman lalu masukkan kode.");
+        } else if (err.status >= 500) {
+          // Jangan samarkan galat server sebagai kode salah.
+          setPesan("Terjadi kesalahan pada server. Coba lagi.");
         } else {
           setPesan(pesanGalat(d) || "Kode salah atau sudah kedaluwarsa.");
         }
@@ -89,10 +92,21 @@ export function Verifikasi2fa({ sudahTerdaftar }: { sudahTerdaftar: boolean }) {
       {setup && (
         <div className="space-y-3">
           <div className="flex justify-center rounded-md border border-dash-border bg-white p-4">
-            <QRCodeSVG value={setup.otpauth_uri} size={168} aria-label="Kode QR setup 2FA" />
+            <QRCodeSVG
+              value={setup.otpauth_uri}
+              size={224}
+              level="M"
+              marginSize={4}
+              bgColor="#ffffff"
+              fgColor="#000000"
+              data-otpauth-uri={setup.otpauth_uri}
+              aria-label="Kode QR setup 2FA"
+            />
           </div>
           <p className="text-[12px] text-dash-text-muted">Tidak bisa memindai QR? Masukkan kode ini manual:</p>
-          <p className="select-all break-all rounded-md bg-dash-bg-alt px-3 py-2 font-mono text-[12.5px]">{setup.secret}</p>
+          <p className="select-all break-all rounded-md bg-dash-bg-alt px-3 py-2 font-mono text-[12.5px]">
+            {setup.secret.replace(/(.{4})/g, "$1 ").trim()}
+          </p>
         </div>
       )}
 
