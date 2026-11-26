@@ -29,10 +29,7 @@ export default async function LayoutDasbor({ children }: { children: React.React
         </header>
 
         <div className="mx-auto flex max-w-[1200px] flex-col gap-6 px-6 py-6 md:flex-row md:px-8">
-          <aside className="md:w-48 md:shrink-0">
-            <p className="mb-2 px-3 text-[10.5px] uppercase tracking-wide text-dash-text-muted">Kelola</p>
-            <MenuDasbor />
-          </aside>
+          <MenuDasbor />
           <main className="min-w-0 flex-1">{children}</main>
         </div>
       </div>

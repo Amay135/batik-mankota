@@ -1,9 +1,5 @@
-import type { Metadata } from "next";
-
-import { StokMenipis } from "@/components/dasbor/stok-menipis";
-
-export const metadata: Metadata = { title: "Stok Menipis" };
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <StokMenipis />;
+  redirect("/dashboard/inventaris?tab=menipis");
 }

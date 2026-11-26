@@ -8,7 +8,7 @@ import { waktuJakarta } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TabsContent } from "@/components/ui/tabs";
 import type { HalamanMutasi, HalamanStok, KategoriAdmin, Mutasi, Stok } from "@/types/skema";
 
 import { DataTable } from "./data-table";
@@ -29,8 +29,8 @@ const TIPE = [
 // Sama dengan StokPagination.page_size di backend.
 const PER_HALAMAN = 50;
 
-export function StokDasbor() {
-  const [tab, setTab] = useState("stok");
+/** Tab "stok" dan "mutasi" dikendalikan halaman Inventaris agar satu tingkat tab saja. */
+export function StokDasbor({ tab, onTabChange }: { tab: string; onTabChange: (nilai: string) => void }) {
   const [kategori, setKategori] = useState<KategoriAdmin[]>([]);
 
   // Stok
@@ -121,7 +121,7 @@ export function StokDasbor() {
   function lihatRiwayat(s: Stok) {
     setFilterMutasi({ ...FILTER_MUTASI, varian_id: String(s.varian) });
     setHalamanMutasi(1);
-    setTab("mutasi");
+    onTabChange("mutasi");
   }
 
   function bukaPenyesuaian(s: Stok) {
@@ -219,31 +219,8 @@ export function StokDasbor() {
   ];
 
   return (
-    <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl">Stok</h1>
-        <p className="mt-1 text-[12px] text-dash-text-muted">
-          Angka persis per varian dan riwayat pergerakan stok. Ledger hanya bisa dibaca.
-        </p>
-      </header>
-
-      <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="bg-dash-bg-alt text-dash-text">
-          <TabsTrigger
-            value="stok"
-            className="data-[state=active]:bg-dash-surface data-[state=active]:text-dash-text"
-          >
-            Stok
-          </TabsTrigger>
-          <TabsTrigger
-            value="mutasi"
-            className="data-[state=active]:bg-dash-surface data-[state=active]:text-dash-text"
-          >
-            Riwayat mutasi
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="stok">
+    <>
+      <TabsContent value="stok">
           <section className="panel-dasbor" aria-label="Filter stok">
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <div>
@@ -409,8 +386,7 @@ export function StokDasbor() {
               </div>
             )}
           </section>
-        </TabsContent>
-      </Tabs>
+      </TabsContent>
 
       <DialogKonfirmasi
         terbuka={dialog !== null}
@@ -439,6 +415,6 @@ export function StokDasbor() {
           {galatDialog && <ErrorState pesan={galatDialog} />}
         </div>
       </DialogKonfirmasi>
-    </div>
+    </>
   );
 }

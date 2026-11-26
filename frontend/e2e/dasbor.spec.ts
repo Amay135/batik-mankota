@@ -19,25 +19,23 @@ async function masukAdmin(page: Page) {
   await page.waitForURL("**/dashboard");
 }
 
-test("admin: login, TOTP, menu fase 1, kelola akun", async ({ page }) => {
+test("admin: login, TOTP, dashboard overview, menu fase 1, kelola akun", async ({ page }) => {
   await masukAdmin(page);
 
-  await expect(page.locator("[data-menu-id]")).toHaveCount(9);
+  await expect(page.getByRole("heading", { name: "Dashboard", exact: true })).toBeVisible();
+  await expect(page.getByText(/Selamat datang, Admin Utama/)).toBeVisible();
+
+  await expect(page.locator("[data-menu-id]")).toHaveCount(6);
   const id = await page
     .locator("[data-menu-id]")
     .evaluateAll((els) => els.map((e) => e.getAttribute("data-menu-id")));
-  expect(id).toEqual([
-    "ADM-01",
-    "ADM-03",
-    "ADM-10",
-    "ADM-11",
-    "ADM-12",
-    "ADM-13",
-    "ADM-14",
-    "ADM-15",
-    "ADM-16",
-  ]);
+  expect(id).toEqual(["ADM-10", "ADM-12", "ADM-15", "ADM-16", "ADM-01", "ADM-03"]);
 
+  // Fitur yang belum ada ditandai "Segera" dan bukan tautan.
+  await expect(page.getByRole("navigation", { name: "Menu dashboard" }).getByText("Pesanan")).toBeVisible();
+  await expect(page.getByText("Segera")).toHaveCount(6);
+
+  await page.goto("/dashboard/akun");
   await page.getByLabel("Nama lengkap").fill("Kasir Baru");
   await page.getByLabel("Email").fill("kasir.baru@mankota.id");
   await page.getByLabel("Kata sandi").fill("sandi12345");
@@ -63,6 +61,23 @@ test("admin: login, TOTP, menu fase 1, kelola akun", async ({ page }) => {
   await expect(page.locator("dialog[open]")).toHaveCount(0);
 
   await page.screenshot({ path: "e2e/screenshots/adm-01.png", fullPage: true });
+});
+
+test("navigasi mobile: drawer menu, pilih Inventaris, tanpa overflow", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await masukAdmin(page);
+
+  await page.getByRole("button", { name: "Menu" }).click();
+  const drawer = page.getByRole("dialog", { name: "Navigasi dashboard" });
+  await expect(drawer).toBeVisible();
+
+  await drawer.getByRole("link", { name: "Inventaris" }).click();
+  await page.waitForURL("**/dashboard/inventaris");
+  await expect(drawer).toBeHidden();
+  await expect(page.getByRole("tab", { name: "Stok", exact: true })).toHaveAttribute("aria-selected", "true");
+
+  const meluber = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
+  expect(meluber).toBe(false);
 });
 
 test("admin tanpa TOTP diarahkan ke setup", async ({ page }) => {

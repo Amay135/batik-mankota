@@ -130,7 +130,7 @@ mankota/
 │   │   │   ├── (auth)/           # masuk, daftar, verifikasi-2fa
 │   │   │   ├── (akun)/           # koleksi, produk/[slug], checkout, pesanan  [user]
 │   │   │   ├── kasir/            # POS (belum dibangun)                       [kasir, admin]
-│   │   │   └── dashboard/        # akun, audit, stok, pengadaan, keuangan, laporan, pelanggan [admin]
+│   │   │   └── dashboard/        # dashboard, akun, audit, produk, inventaris, ulasan, panduan ukuran [admin]
 │   │   ├── components/ (ui/ dari shadcn, fitur/)
 │   │   ├── lib/ (API client, auth helper, format Rupiah)
 │   │   └── types/api.d.ts        # DIGENERATE dari OpenAPI, jangan diedit manual
@@ -324,8 +324,11 @@ Setelah COMMIT, API katalog langsung menghitung `qty_on_hand − qty_reserved` d
 | `/produk/[slug]`, `/checkout`, `/pesanan/[nomor]` | `user` (middleware + layout) | sudah ada |
 | `/403` | halaman galat | sudah ada |
 | `/kasir/*` | `kasir`, `admin` | belum dibangun |
-| `/dashboard`, `/dashboard/audit` | `admin` saja | sudah ada |
+| `/dashboard` | `admin` saja | ringkasan operasional, stok, aktivitas, navigasi cepat |
+| `/dashboard/akun`, `/dashboard/audit`, `/dashboard/produk`, `/dashboard/inventaris`, `/dashboard/ulasan`, `/dashboard/panduan-ukuran` | `admin` saja | sudah ada |
 | `/q/[token]` | publik (konten bertingkat) | rencana |
+
+Inventaris menggabungkan stok, mutasi, opname, stok menipis, dan label QR sebagai tab. Rute lama (`/dashboard/stok`, `/dashboard/stok-menipis`, `/dashboard/opname`, `/dashboard/label`) dialihkan ke tab terkait agar tautan lama tetap berfungsi.
 
 `kasir` yang membuka `/dashboard/*` mendapat 403. Matriks izin di `docs/PRD.md` bagian 2 menang atas aturan lama "sebagian baca saja".
 

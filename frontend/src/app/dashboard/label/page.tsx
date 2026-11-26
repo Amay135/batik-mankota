@@ -1,8 +1,4 @@
-import type { Metadata } from "next";
-
-import { LabelQr } from "@/components/dasbor/label-qr";
-
-export const metadata: Metadata = { title: "Label QR" };
+import { redirect } from "next/navigation";
 
 export default async function Page({
   searchParams,
@@ -10,5 +6,8 @@ export default async function Page({
   searchParams: Promise<{ produk?: string; varian?: string }>;
 }) {
   const q = await searchParams;
-  return <LabelQr awalProduk={q.produk} awalVarian={q.varian} />;
+  const params = new URLSearchParams({ tab: "label" });
+  if (q.produk) params.set("produk", q.produk);
+  if (q.varian) params.set("varian", q.varian);
+  redirect(`/dashboard/inventaris?${params}`);
 }
