@@ -15,6 +15,7 @@ SECRET = "JBSWY3DPEHPK3PXP"
 # 12 karakter hex (sisa generator lama): 0/1 bukan alfabet base32.
 # Data dummy: sengaja bukan secret Base32 yang valid.
 INVALID_SECRET = "not-a-valid-base32-secret!"
+
 # RFC 6238 SHA1: secret ASCII "12345678901234567890", vektor 8 digit.
 RFC_SECRET = base64.b32encode(b"12345678901234567890").decode().rstrip("=")
 RFC_VECTORS = {
