@@ -95,7 +95,10 @@ def reset_password(akun, password):
 def mulai_2fa(user):
     if user.otp_enabled:
         raise TotpAlreadyEnrolled()
-    if not user.otp_secret:
+    # Secret lama yang bukan base32 (data dari generator versi lain) tidak akan
+    # pernah lolos verifikasi; ganti dengan secret valid. Akun yang sudah aktif
+    # tidak disentuh (ditolak 409 di atas).
+    if not totp.is_valid_secret(user.otp_secret):
         user.otp_secret = totp.generate_secret()
         user.save(update_fields=["otp_secret"])
     return user.otp_secret
