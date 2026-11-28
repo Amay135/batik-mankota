@@ -25,6 +25,15 @@ test("admin: login, TOTP, dashboard overview, menu fase 1, kelola akun", async (
   await expect(page.getByRole("heading", { name: "Dashboard", exact: true })).toBeVisible();
   await expect(page.getByText(/Selamat datang, Admin Utama/)).toBeVisible();
 
+  // KPI berasal dari endpoint ringkasan (mock e2e), bukan angka dummy.
+  await expect(
+    page.locator(".panel-dasbor").filter({ hasText: "Penjualan hari ini" }),
+  ).toContainText("Rp0");
+  await expect(
+    page.locator(".panel-dasbor").filter({ hasText: "Varian stok menipis" }),
+  ).toContainText("1");
+  await expect(page.getByText("Aktivitas admin terbaru")).toBeVisible();
+
   await expect(page.locator("[data-menu-id]")).toHaveCount(6);
   const id = await page
     .locator("[data-menu-id]")

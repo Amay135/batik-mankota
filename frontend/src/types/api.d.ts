@@ -651,6 +651,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/laporan/ringkasan/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_laporan_ringkasan_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/pesanan/": {
         parameters: {
             query?: never;
@@ -754,7 +770,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: operations["v1_stok_opname_list"];
         put?: never;
         post: operations["v1_stok_opname_create"];
         delete?: never;
@@ -828,6 +844,17 @@ export interface components {
          * @enum {string}
          */
         ActionEnum: "price_change" | "stock_adjust" | "min_stock_change" | "void_return" | "role_change" | "admin_login" | "otp_reset" | "review_moderate" | "size_guide_change";
+        AktivitasDasbor: {
+            readonly id: number;
+            readonly action: components["schemas"]["ActionEnum"];
+            readonly aksi_label: string;
+            /** Format: email */
+            readonly pelaku: string;
+            readonly entity: string;
+            readonly entity_id: string;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
         AkunAdmin: {
             readonly id: number;
             /** Format: email */
@@ -1032,7 +1059,7 @@ export interface components {
         };
         Opname: {
             readonly id: number;
-            status?: components["schemas"]["OpnameStatusEnum"];
+            status?: components["schemas"]["Status41dEnum"];
             readonly status_label: string;
             readonly catatan: string;
             /** Format: email */
@@ -1057,12 +1084,20 @@ export interface components {
             varian_id: number;
             qty_fisik: number;
         };
-        /**
-         * @description * `DRAFT` - Draf
-         *     * `APPLIED` - Diterapkan
-         * @enum {string}
-         */
-        OpnameStatusEnum: "DRAFT" | "APPLIED";
+        OpnameRingkas: {
+            readonly id: number;
+            readonly status: components["schemas"]["Status41dEnum"];
+            readonly status_label: string;
+            readonly catatan: string;
+            /** Format: email */
+            readonly dibuat_oleh: string;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly applied_at: string | null;
+            readonly jumlah_varian: number;
+            readonly jumlah_selisih: number;
+        };
         OtpVerify: {
             code: string;
         };
@@ -1095,6 +1130,21 @@ export interface components {
              */
             previous?: string | null;
             results: components["schemas"]["Mutasi"][];
+        };
+        PaginatedOpnameRingkasList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["OpnameRingkas"][];
         };
         PaginatedProdukListList: {
             jumlah: number;
@@ -1372,6 +1422,17 @@ export interface components {
             total: number;
             gratis_ongkir_min: number;
         };
+        RingkasanDasbor: {
+            /** Format: date */
+            tanggal: string;
+            penjualan_hari_ini: number;
+            pesanan_hari_ini: number;
+            pesanan_menunggu_pembayaran: number;
+            produk_terjual_hari_ini: number;
+            varian_stok_menipis: number;
+            varian_stok_habis: number;
+            aktivitas: components["schemas"]["AktivitasDasbor"][];
+        };
         /**
          * @description * `admin` - Admin
          *     * `kasir` - Kasir
@@ -1389,6 +1450,12 @@ export interface components {
          * @enum {string}
          */
         StaffRoleEnum: "admin" | "kasir";
+        /**
+         * @description * `DRAFT` - Draf
+         *     * `APPLIED` - Diterapkan
+         * @enum {string}
+         */
+        Status41dEnum: "DRAFT" | "APPLIED";
         Stok: {
             readonly varian: number;
             readonly sku: string;
@@ -3157,6 +3224,25 @@ export interface operations {
             };
         };
     };
+    v1_laporan_ringkasan_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RingkasanDasbor"];
+                };
+            };
+        };
+    };
     v1_pesanan_list: {
         parameters: {
             query?: never;
@@ -3373,6 +3459,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PaginatedMutasiList"];
+                };
+            };
+        };
+    };
+    v1_stok_opname_list: {
+        parameters: {
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                per_halaman?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedOpnameRingkasList"];
                 };
             };
         };

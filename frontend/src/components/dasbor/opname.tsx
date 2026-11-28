@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import type { ColumnDef } from "@tanstack/react-table";
 
 import { api, pesanAksi } from "@/lib/api";
 import { waktuJakarta } from "@/lib/format";
@@ -8,12 +9,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { HalamanStok, Opname, Stok } from "@/types/skema";
+import type { HalamanOpname, HalamanStok, Opname, OpnameRingkas, Stok } from "@/types/skema";
 
+import { DataTable } from "./data-table";
 import { DialogKonfirmasi } from "./dialog-konfirmasi";
 import { EmptyState, ErrorState, Memuat } from "./keadaan";
 
 const LABEL_KOLOM = "mb-1.5 block text-[11px] text-dash-text-muted";
+const PER_HALAMAN_RIWAYAT = 20;
 
 type Hitungan = {
   varian: number;
@@ -36,6 +39,41 @@ export function OpnameDasbor() {
   const [sesi, setSesi] = useState<Opname | null>(null);
   const [dialogTerapkan, setDialogTerapkan] = useState(false);
   const [galatTerapkan, setGalatTerapkan] = useState("");
+  const [riwayat, setRiwayat] = useState<OpnameRingkas[]>([]);
+  const [totalRiwayat, setTotalRiwayat] = useState(0);
+  const [halamanRiwayat, setHalamanRiwayat] = useState(1);
+  const [memuatRiwayat, setMemuatRiwayat] = useState(true);
+  const [galatRiwayat, setGalatRiwayat] = useState("");
+  const [galatDetail, setGalatDetail] = useState("");
+
+  const muatRiwayat = useCallback(async () => {
+    setMemuatRiwayat(true);
+    setGalatRiwayat("");
+    try {
+      const data = await api<HalamanOpname>(
+        `/stok/opname/?page=${halamanRiwayat}&per_halaman=${PER_HALAMAN_RIWAYAT}`,
+      );
+      setRiwayat(data.results);
+      setTotalRiwayat(data.count);
+    } catch (err) {
+      setGalatRiwayat(pesanAksi(err) || "Gagal memuat riwayat opname.");
+    } finally {
+      setMemuatRiwayat(false);
+    }
+  }, [halamanRiwayat]);
+
+  useEffect(() => {
+    void muatRiwayat();
+  }, [muatRiwayat]);
+
+  async function bukaRiwayat(id: number) {
+    setGalatDetail("");
+    try {
+      setSesi(await api<Opname>(`/stok/opname/${id}/`));
+    } catch (err) {
+      setGalatDetail(pesanAksi(err) || "Gagal memuat detail opname.");
+    }
+  }
 
   const cariVarian = useCallback(async () => {
     try {
@@ -102,8 +140,10 @@ export function OpnameDasbor() {
         },
       });
       setSesi(data);
+      setGalatDetail("");
       setItems([]);
       setCatatan("");
+      await muatRiwayat();
     } catch (err) {
       setGalatBuat(pesanAksi(err));
     } finally {
@@ -118,6 +158,7 @@ export function OpnameDasbor() {
     try {
       setSesi(await api<Opname>(`/stok/opname/${sesi.id}/terapkan/`, { method: "POST" }));
       setDialogTerapkan(false);
+      await muatRiwayat();
     } catch (err) {
       setGalatTerapkan(pesanAksi(err));
     } finally {
@@ -127,8 +168,77 @@ export function OpnameDasbor() {
 
   const diterapkan = sesi?.status === "APPLIED";
 
+  const kolomRiwayat: ColumnDef<OpnameRingkas, unknown>[] = [
+    {
+      id: "tanggal",
+      header: "Tanggal",
+      cell: ({ row }) => (
+        <span className="whitespace-nowrap">{waktuJakarta(row.original.created_at)}</span>
+      ),
+    },
+    {
+      id: "status",
+      header: "Status",
+      cell: ({ row }) => (
+        <span
+          className={`lencana ${row.original.status === "APPLIED" ? "lencana-utama" : "lencana-redup"}`}
+        >
+          {row.original.status_label}
+        </span>
+      ),
+    },
+    { id: "varian", header: "Varian dihitung", cell: ({ row }) => row.original.jumlah_varian },
+    {
+      id: "selisih",
+      header: "Varian berselisih",
+      cell: ({ row }) => row.original.jumlah_selisih,
+    },
+    {
+      id: "aksi",
+      header: "Aksi",
+      cell: ({ row }) => (
+        <div className="flex justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 px-2.5 text-[11.5px]"
+            onClick={() => void bukaRiwayat(row.original.id)}
+          >
+            Lihat detail
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-6">
+      <section className="panel-dasbor" aria-labelledby="judul-riwayat">
+        <h2 id="judul-riwayat" className="font-sans text-[13px] font-semibold">
+          Riwayat opname
+        </h2>
+        {memuatRiwayat ? (
+          <Memuat pesan="Memuat riwayat opname..." />
+        ) : galatRiwayat ? (
+          <ErrorState pesan={galatRiwayat} />
+        ) : (
+          <div className="mt-3">
+            <DataTable
+              kolom={kolomRiwayat}
+              data={riwayat}
+              total={totalRiwayat}
+              halaman={halamanRiwayat}
+              perHalaman={PER_HALAMAN_RIWAYAT}
+              onHalaman={setHalamanRiwayat}
+              kosong="Belum ada opname."
+            />
+          </div>
+        )}
+      </section>
+
+      {galatDetail && <ErrorState pesan={galatDetail} />}
+
       {sesi ? (
         <section className="panel-dasbor" aria-labelledby="judul-sesi">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -144,6 +254,10 @@ export function OpnameDasbor() {
             {sesi.applied_at && ` · diterapkan ${waktuJakarta(sesi.applied_at)}`}
           </p>
           <p className="mt-1 text-[12px]">Catatan: {sesi.catatan}</p>
+          <p className="mt-1 text-[11px] text-dash-text-muted">
+            Sistem = stok saat sesi dibuat; Fisik = hasil hitung. Penerapan memakai
+            selisih fisik − sistem.
+          </p>
 
           <div className="mt-3 overflow-x-auto">
             <Table>

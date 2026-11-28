@@ -2,7 +2,7 @@ from django.db.models import F, Q
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
-from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveAPIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -19,6 +19,7 @@ from .serializers import (
     FilterStokSerializer,
     MinimumStokSerializer,
     MutasiSerializer,
+    OpnameRingkasSerializer,
     OpnameSerializer,
     PenyesuaianSerializer,
     StokSerializer,
@@ -163,8 +164,16 @@ class MinimumStokView(APIView):
         return Response(StokSerializer(_stok_queryset().get(pk=pk)).data)
 
 
-class OpnameCreateView(APIView):
+class OpnameView(ListCreateAPIView):
     permission_classes = [IsAdmin]
+    pagination_class = StokPagination
+
+    def get_queryset(self):
+        # Ringkasan daftar hanya butuh item untuk hitungan, bukan detail varian.
+        return StockOpname.objects.select_related("actor").prefetch_related("items")
+
+    def get_serializer_class(self):
+        return OpnameRingkasSerializer
 
     @extend_schema(
         request=BuatOpnameSerializer,

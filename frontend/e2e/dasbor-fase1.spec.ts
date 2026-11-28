@@ -111,11 +111,19 @@ test("ADM-13 opname: buat sesi, terapkan, validasi hitungan", async ({ page }) =
   await page.getByRole("button", { name: "Buat sesi opname" }).click();
 
   await expect(page.getByRole("heading", { name: "Sesi opname #1" })).toBeVisible();
-  await expect(page.getByRole("row", { name: /PARANG-M/ })).toContainText("+2");
+  const sesi = page
+    .locator("section")
+    .filter({ has: page.getByRole("heading", { name: "Sesi opname #1" }) });
+  await expect(sesi.getByRole("row", { name: /PARANG-M/ })).toContainText("+2");
 
   await page.getByRole("button", { name: "Terapkan opname" }).click();
   await page.locator("dialog[open]").getByRole("button", { name: "Terapkan" }).click();
-  await expect(page.getByText("Diterapkan", { exact: true })).toBeVisible();
+  await expect(sesi.getByText("Diterapkan", { exact: true })).toBeVisible();
+
+  // Riwayat opname memuat sesi yang baru diterapkan.
+  await expect(page.getByRole("heading", { name: "Riwayat opname" })).toBeVisible();
+  const barisRiwayat = page.getByRole("row", { name: /Diterapkan/ });
+  await expect(barisRiwayat).toBeVisible();
 
   await page.getByRole("button", { name: "Sesi baru" }).click();
   await page.getByRole("row", { name: /PARANG-L/ }).getByRole("button", { name: "Tambah" }).click();
@@ -123,6 +131,10 @@ test("ADM-13 opname: buat sesi, terapkan, validasi hitungan", async ({ page }) =
   await page.getByLabel("Catatan sesi").fill("Cek kedua");
   await page.getByRole("button", { name: "Buat sesi opname" }).click();
   await expect(page.getByText("Jumlah fisik harus bilangan bulat 0 atau lebih.")).toBeVisible();
+
+  // Baris riwayat dapat dibuka kembali dengan hasil sebelum/sesudah.
+  await barisRiwayat.getByRole("button", { name: "Lihat detail" }).click();
+  await expect(page.getByRole("heading", { name: "Sesi opname #1" })).toBeVisible();
 
   await page.screenshot({ path: "e2e/screenshots/adm-13.png", fullPage: true });
 });

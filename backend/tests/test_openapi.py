@@ -9,7 +9,7 @@ from apps.accounts.admin_scope import ADMIN_CAPABILITIES
 from apps.accounts.models import User
 from apps.accounts.permissions import ADMIN_2FA_AT_SESSION_KEY, ADMIN_2FA_SESSION_KEY
 
-FASE_SAAT_INI = 0
+FASE_SAAT_INI = 2
 
 
 @override_settings(DEBUG=True)
@@ -22,7 +22,9 @@ def test_skema_openapi_memuat_fase_0_dan_field_2fa():
         if entry["fase"] > FASE_SAAT_INI:
             continue
         # APIView tanpa queryset: DRF menamai ulang {pk} menjadi {id}.
-        path = entry["path"].replace("<int:pk>", "{id}")
+        path = (
+            entry["path"].replace("<int:pk>", "{id}").replace("<str:token>", "{token}")
+        )
         assert path in schema["paths"], entry
         assert entry["method"].lower() in schema["paths"][path], entry
 
