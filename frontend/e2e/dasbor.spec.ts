@@ -34,15 +34,15 @@ test("admin: login, TOTP, dashboard overview, menu fase 1, kelola akun", async (
   ).toContainText("1");
   await expect(page.getByText("Aktivitas admin terbaru")).toBeVisible();
 
-  await expect(page.locator("[data-menu-id]")).toHaveCount(6);
+  await expect(page.locator("[data-menu-id]")).toHaveCount(7);
   const id = await page
     .locator("[data-menu-id]")
     .evaluateAll((els) => els.map((e) => e.getAttribute("data-menu-id")));
-  expect(id).toEqual(["ADM-10", "ADM-12", "ADM-15", "ADM-16", "ADM-01", "ADM-03"]);
+  expect(id).toEqual(["ADM-10", "ADM-12", "ADM-15", "ADM-16", "ADM-18", "ADM-01", "ADM-03"]);
 
   // Fitur yang belum ada ditandai "Segera" dan bukan tautan.
   await expect(page.getByRole("navigation", { name: "Menu dashboard" }).getByText("Pesanan")).toBeVisible();
-  await expect(page.getByText("Segera")).toHaveCount(6);
+  await expect(page.getByText("Segera")).toHaveCount(5);
 
   await page.goto("/dashboard/akun");
   await page.getByLabel("Nama lengkap").fill("Kasir Baru");
@@ -114,13 +114,13 @@ test("kode terkunci menampilkan pesan Indonesia", async ({ page }) => {
   await expect(page.getByText("Terlalu banyak kode salah.")).toBeVisible();
 });
 
-for (const [email, sandi] of [
-  ["kasir@mankota.id", "kasir12345"],
-  ["user@mankota.id", "user12345"],
-]) {
+for (const [email, sandi, tujuan] of [
+  ["kasir@mankota.id", "kasir12345", "**/kasir"],
+  ["user@mankota.id", "user12345", "**/koleksi"],
+] as const) {
   test(`${email} tidak bisa membuka dashboard`, async ({ page }) => {
     await masuk(page, email, sandi);
-    await page.waitForURL("**/koleksi");
+    await page.waitForURL(tujuan);
     await page.goto("/dashboard");
     await page.waitForURL("**/403");
     await expect(page.getByRole("heading", { name: "Akses ditolak" })).toBeVisible();

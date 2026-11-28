@@ -43,4 +43,13 @@ export type HalamanOpname = Skema["PaginatedOpnameRingkasList"];
 export type RingkasanDasbor = Skema["RingkasanDasbor"];
 export type AktivitasDasbor = Skema["AktivitasDasbor"];
 
+// Fase 3: pelanggan & riwayat pembelian (tanpa member/poin).
+export type Pelanggan = Skema["Pelanggan"];
+export type PelangganDetail = Skema["PelangganDetail"];
+export type StatistikPelanggan = Skema["StatistikPelanggan"];
+export type HalamanPelanggan = Skema["PaginatedPelangganList"];
+export type RiwayatPesananPelanggan = Skema["PesananPelanggan"];
+export type HalamanRiwayatPesanan = Skema["PaginatedPesananPelangganList"];
+export type RingkasanPelanggan = Skema["RingkasanPelanggan"];
+
 export type Galat = Skema["Galat"];

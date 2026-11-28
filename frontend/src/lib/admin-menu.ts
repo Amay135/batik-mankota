@@ -20,7 +20,7 @@ export const ADMIN_MENU: GrupMenu[] = [
       { id: "ADM-15", label: "Ulasan", href: "/dashboard/ulasan" },
       { id: "ADM-16", label: "Panduan Ukuran", href: "/dashboard/panduan-ukuran" },
       { label: "Pengadaan" },
-      { label: "Pelanggan" },
+      { id: "ADM-18", label: "Pelanggan", href: "/dashboard/pelanggan" },
     ],
   },
   { judul: "Bisnis", item: [{ label: "Keuangan" }, { label: "Laporan" }] },

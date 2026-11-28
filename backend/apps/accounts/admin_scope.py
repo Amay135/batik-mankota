@@ -262,3 +262,29 @@ ADMIN_CAPABILITIES += [
         "requires_2fa": True,
     },
 ]
+
+
+def _pelanggan(path, methods, *, roles):
+    # ADM-18 = kelola pelanggan & riwayat pembelian (PRD F-CRM-01; F-CRM-04),
+    # tahap 3 dan belum termasuk member/poin.
+    return [
+        {
+            "id": "ADM-18",
+            "rujukan": "PRD F-CRM-01; F-CRM-04; matriks Kelola pelanggan",
+            "fase": 3,
+            "method": method,
+            "path": f"/api/v1/pelanggan/{path}",
+            "roles": roles,
+            "requires_2fa": True,
+        }
+        for method in methods
+    ]
+
+
+ADMIN_CAPABILITIES += [
+    # Kasir boleh cari & daftar pelanggan untuk alur POS; detail/hapus tetap admin.
+    *_pelanggan("", ("GET", "POST"), roles=("admin", "kasir")),
+    *_pelanggan("ringkasan/", ("GET",), roles=("admin",)),
+    *_pelanggan("<int:pk>/", ("GET", "PUT", "PATCH", "DELETE"), roles=("admin",)),
+    *_pelanggan("<int:pk>/pesanan/", ("GET",), roles=("admin",)),
+]

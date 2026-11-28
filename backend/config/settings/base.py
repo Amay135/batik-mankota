@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     "apps.accounts",
     "apps.audit",
     "apps.catalog",
+    "apps.crm",
     "apps.orders",
     "apps.inventory",
     "apps.reports",

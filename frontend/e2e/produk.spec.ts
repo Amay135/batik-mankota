@@ -21,7 +21,7 @@ async function masukAdmin(page: Page) {
 
 test("kasir tidak melihat tombol beli", async ({ page }) => {
   await masuk(page, "kasir@mankota.id", "kasir12345");
-  await page.waitForURL("**/koleksi");
+  await page.waitForURL("**/kasir");
   await page.goto("/produk/demo");
   await expect(page.getByRole("heading", { name: "Batik Demo" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Tambah ke Keranjang" })).toHaveCount(0);

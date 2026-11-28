@@ -72,6 +72,8 @@ class Pesanan(models.Model):
 
     nomor = models.CharField(max_length=24, unique=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="pesanan")
+    # Nullable: transaksi lama dan pembeli tanpa data pelanggan tetap sah.
+    pelanggan = models.ForeignKey("crm.Pelanggan", null=True, blank=True, on_delete=models.PROTECT, related_name="pesanan")
     status = models.CharField(max_length=24, choices=Status.choices, default=Status.MENUNGGU)
 
     nama_lengkap = models.CharField(max_length=120)
