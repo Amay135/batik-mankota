@@ -2,6 +2,10 @@
 
 Hanya entri fase yang sedang dikerjakan yang boleh ditambahkan. Endpoint admin
 baru tanpa entri di sini akan membuat tes pengunci gagal.
+
+Fase 2: riwayat opname (GET /stok/opname/) dan ringkasan dashboard admin
+(GET /laporan/ringkasan/). Ringkasan tidak memuat HPP karena snapshot biaya
+belum tersedia.
 """
 
 ADMIN_CAPABILITIES = [
@@ -151,11 +155,11 @@ ADMIN_CAPABILITIES += [
 ]
 
 
-def _stok(path, method, *, id_, rujukan, roles):
+def _stok(path, method, *, id_, rujukan, roles, fase=1):
     return {
         "id": id_,
         "rujukan": rujukan,
-        "fase": 1,
+        "fase": fase,
         "method": method,
         "path": f"/api/v1/stok/{path}",
         "roles": roles,
@@ -191,6 +195,14 @@ ADMIN_CAPABILITIES += [
         id_="ADM-13",
         rujukan="PRD F-INV-04",
         roles=("admin",),
+    ),
+    _stok(
+        "opname/",
+        "GET",
+        id_="ADM-13",
+        rujukan="PRD F-INV-04; riwayat opname",
+        roles=("admin",),
+        fase=2,
     ),
     _stok(
         "opname/<int:pk>/",
@@ -240,4 +252,13 @@ ADMIN_CAPABILITIES += [
     _label_qr("/api/v1/katalog/varian/<int:pk>/qr/", "GET", roles=("admin",)),
     _label_qr("/api/v1/katalog/label/", "POST", roles=("admin",)),
     _label_qr("/api/v1/kasir/varian/<str:token>/", "GET", roles=("admin", "kasir")),
+    {
+        "id": "ADM-17",
+        "rujukan": "PRD 1 tujuan 4; F-FIN-05 (penjualan harian, stok menipis); ARSITEKTUR 8.3",
+        "fase": 2,
+        "method": "GET",
+        "path": "/api/v1/laporan/ringkasan/",
+        "roles": ("admin",),
+        "requires_2fa": True,
+    },
 ]

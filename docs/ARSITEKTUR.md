@@ -284,9 +284,10 @@ Setelah COMMIT, API katalog langsung menghitung `qty_on_hand − qty_reserved` d
 | Keranjang & pesanan | `GET /keranjang/`, `POST /keranjang/item/`, `PATCH/DELETE /keranjang/item/{id}/`, `POST/DELETE /keranjang/voucher/`; `GET/POST /pesanan/`, `GET /pesanan/{nomor}/` | user (milik sendiri) | sudah ada |
 | Pembayaran | `POST /pembayaran/webhook/` | gateway (signature) | rencana |
 | Kasir (POS) | `GET /kasir/varian/`, `GET /kasir/varian/{qr_token}/`, `POST /kasir/shift/`, `POST /kasir/transaksi/`, `POST /kasir/transaksi/{nomor}/batal/`, `POST /kasir/retur/` | kasir, admin | rencana |
-| Stok | `GET /stok/`, `GET /stok/menipis/`, `GET /stok/mutasi/`; `POST /stok/penyesuaian/`, `POST /stok/opname/`; `GET /stok/opname/{id}/`, `POST /stok/opname/{id}/terapkan/`; `PATCH /stok/{varian_id}/minimum/` | kasir (stok & menipis), admin (+2FA) | sudah ada |
+| Stok | `GET /stok/`, `GET /stok/menipis/`, `GET /stok/mutasi/`; `POST /stok/penyesuaian/`, `GET/POST /stok/opname/`; `GET /stok/opname/{id}/`, `POST /stok/opname/{id}/terapkan/`; `PATCH /stok/{varian_id}/minimum/` | kasir (stok & menipis), admin (+2FA) | sudah ada |
 | Pengadaan | `/pengadaan/pemasok/`, `/pengadaan/pesanan/`, `/pengadaan/penerimaan/` | admin | rencana |
 | Keuangan & laporan | `/keuangan/rekening/`, `/keuangan/pengeluaran/`, `/keuangan/hutang/`; `/laporan/penjualan/`, `/laporan/laba-rugi/`, `/laporan/nilai-stok/`, `/laporan/{nama}/ekspor/` | admin | rencana |
+| Ringkasan dashboard | `GET /laporan/ringkasan/` (KPI hari ini, stok menipis/habis, aktivitas admin) | admin (+2FA) | sudah ada |
 | Pelanggan (CRM) | `/pelanggan/`, `/pelanggan/{id}/`, `/pelanggan/{id}/poin/`, `/pelanggan/voucher/` | admin; kasir (cari/daftar) | rencana |
 | Audit | `GET /audit/` | admin | sudah ada |
 
@@ -324,7 +325,7 @@ Setelah COMMIT, API katalog langsung menghitung `qty_on_hand − qty_reserved` d
 | `/produk/[slug]`, `/checkout`, `/pesanan/[nomor]` | `user` (middleware + layout) | sudah ada |
 | `/403` | halaman galat | sudah ada |
 | `/kasir/*` | `kasir`, `admin` | belum dibangun |
-| `/dashboard` | `admin` saja | ringkasan operasional, stok, aktivitas, navigasi cepat |
+| `/dashboard` | `admin` saja | ringkasan operasional dari database (tanpa HPP), aktivitas admin, navigasi cepat |
 | `/dashboard/akun`, `/dashboard/audit`, `/dashboard/produk`, `/dashboard/inventaris`, `/dashboard/ulasan`, `/dashboard/panduan-ukuran` | `admin` saja | sudah ada |
 | `/q/[token]` | publik (konten bertingkat) | rencana |
 

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { EmptyState } from "@/components/dasbor/keadaan";
+import { PanelRingkasan } from "@/components/dasbor/ringkasan-dasbor";
 import { ADMIN_MENU } from "@/lib/admin-menu";
 import { requireRole } from "@/lib/api-server";
 
@@ -25,34 +25,7 @@ export default async function HalamanDashboard() {
         </p>
       </header>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <section className="panel-dasbor" aria-labelledby="ringkasan-operasional">
-          <h2 id="ringkasan-operasional" className="font-sans text-[13px] font-semibold">
-            Ringkasan operasional
-          </h2>
-          <EmptyState pesan="Ringkasan penjualan dan pesanan belum tersedia — modul pesanan belum dibangun." />
-        </section>
-
-        <section className="panel-dasbor" aria-labelledby="ringkasan-stok">
-          <h2 id="ringkasan-stok" className="font-sans text-[13px] font-semibold">
-            Ringkasan stok
-          </h2>
-          <EmptyState pesan="Ringkasan stok belum tersedia di sini. Angka stok dan stok menipis ada di halaman Inventaris." />
-          <Link href="/dashboard/inventaris" className="tombol-sekunder mt-2 h-8 px-3 text-[11.5px]">
-            Buka Inventaris
-          </Link>
-        </section>
-      </div>
-
-      <section className="panel-dasbor" aria-labelledby="aktivitas-terbaru">
-        <h2 id="aktivitas-terbaru" className="font-sans text-[13px] font-semibold">
-          Aktivitas terbaru
-        </h2>
-        <EmptyState pesan="Belum ada aktivitas untuk ditampilkan." />
-        <Link href="/dashboard/audit" className="tombol-sekunder h-8 px-3 text-[11.5px]">
-          Lihat log audit
-        </Link>
-      </section>
+      <PanelRingkasan />
 
       <section className="panel-dasbor" aria-labelledby="navigasi-cepat">
         <h2 id="navigasi-cepat" className="font-sans text-[13px] font-semibold">

@@ -25,6 +25,15 @@ def available_stocks(*, ukuran=(), warna=()):
     return qs
 
 
+def hitung_stok_menipis_habis() -> dict[str, int]:
+    """Jumlah varian menipis (tersedia 1..min) dan habis (tersedia 0)."""
+    stok = Stock.objects.annotate(tersedia=F("qty_on_hand") - F("qty_reserved"))
+    return {
+        "menipis": stok.filter(tersedia__gt=0, tersedia__lte=F("min_stock")).count(),
+        "habis": stok.filter(tersedia__lte=0).count(),
+    }
+
+
 def stock_status(stock: Stock) -> str:
     """Label PRD 5.10; min_stock disimpan untuk peringatan restock, bukan label."""
     tersedia = available_qty(stock)

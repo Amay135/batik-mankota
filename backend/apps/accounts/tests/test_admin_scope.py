@@ -22,7 +22,7 @@ from apps.catalog.models import Kategori, Motif, Produk, Ulasan, Varian
 from apps.inventory.services import add_stock
 from apps.orders.models import ItemKeranjang, ItemPesanan, Keranjang, Pesanan
 
-FASE_SAAT_INI = 1
+FASE_SAAT_INI = 2
 PASSWORD = "rahasia-kuat-1"
 ADMIN_ROUTE_PERMISSIONS = (IsAdmin, IsAdminBootstrap, IsKasirOrAdmin)
 

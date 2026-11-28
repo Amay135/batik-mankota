@@ -488,3 +488,65 @@ def test_opname_validasi_masukan(admin_client, varian):
         assert response.status_code == 400, payload
 
     assert StockOpname.objects.count() == 0
+
+
+def test_daftar_opname_memuat_ringkasan_dan_hasil_sebelum_sesudah(
+    admin, admin_client, kasir_client, produk, varian
+):
+    services.add_stock(varian.pk, 10, actor=admin)
+    lebih = Varian.objects.create(
+        produk=produk, warna="soga", ukuran="M", sku="KM-002-SG-M"
+    )
+    services.add_stock(lebih.pk, 4, actor=admin)
+    tetap = Varian.objects.create(
+        produk=produk, warna="krem", ukuran="S", sku="KM-003-KR-S"
+    )
+    services.add_stock(tetap.pk, 3, actor=admin)
+
+    created = admin_client.post(
+        "/api/v1/stok/opname/",
+        {
+            "catatan": "hitung bulanan",
+            "items": [
+                {"varian_id": varian.pk, "qty_fisik": 7},
+                {"varian_id": lebih.pk, "qty_fisik": 6},
+                {"varian_id": tetap.pk, "qty_fisik": 3},
+            ],
+        },
+        format="json",
+    )
+    assert created.status_code == 201, created.content
+    opname_id = created.json()["id"]
+
+    response = admin_client.get("/api/v1/stok/opname/")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["count"] == 1
+    baris = data["results"][0]
+    assert baris["id"] == opname_id
+    assert baris["status"] == StockOpname.Status.DRAFT
+    assert baris["status_label"] == "Draf"
+    assert baris["catatan"] == "hitung bulanan"
+    assert baris["dibuat_oleh"] == admin.email
+    assert baris["jumlah_varian"] == 3
+    assert baris["jumlah_selisih"] == 2
+    assert baris["applied_at"] is None
+
+    # Detail memuat stok sebelum (sistem) dan sesudah (fisik) per varian.
+    detail = admin_client.get(f"/api/v1/stok/opname/{opname_id}/").json()
+    hasil = {
+        item["varian"]: (item["system_qty"], item["counted_qty"])
+        for item in detail["items"]
+    }
+    assert hasil == {varian.pk: (10, 7), lebih.pk: (4, 6), tetap.pk: (3, 3)}
+
+    assert kasir_client.get("/api/v1/stok/opname/").status_code == 403
+
+    assert (
+        admin_client.post(f"/api/v1/stok/opname/{opname_id}/terapkan/").status_code
+        == 200
+    )
+    setelah = admin_client.get("/api/v1/stok/opname/").json()["results"][0]
+    assert setelah["status"] == StockOpname.Status.APPLIED
+    assert setelah["status_label"] == "Diterapkan"
+    assert setelah["applied_at"] is not None

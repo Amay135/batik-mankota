@@ -155,6 +155,35 @@ class OpnameItemSerializer(serializers.ModelSerializer):
         return obj.counted_qty - obj.system_qty
 
 
+class OpnameRingkasSerializer(serializers.ModelSerializer):
+    status_label = serializers.CharField(source="get_status_display", read_only=True)
+    catatan = serializers.CharField(source="note", read_only=True)
+    dibuat_oleh = serializers.EmailField(source="actor.email", read_only=True)
+    jumlah_varian = serializers.SerializerMethodField()
+    jumlah_selisih = serializers.SerializerMethodField()
+
+    class Meta:
+        model = StockOpname
+        fields = [
+            "id",
+            "status",
+            "status_label",
+            "catatan",
+            "dibuat_oleh",
+            "created_at",
+            "applied_at",
+            "jumlah_varian",
+            "jumlah_selisih",
+        ]
+        read_only_fields = fields
+
+    def get_jumlah_varian(self, obj) -> int:
+        return len(obj.items.all())
+
+    def get_jumlah_selisih(self, obj) -> int:
+        return sum(1 for item in obj.items.all() if item.counted_qty != item.system_qty)
+
+
 class OpnameSerializer(serializers.ModelSerializer):
     status_label = serializers.CharField(source="get_status_display", read_only=True)
     catatan = serializers.CharField(source="note", read_only=True)

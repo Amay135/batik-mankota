@@ -196,6 +196,18 @@ function statusStok(tersedia) {
   return tersedia <= 5 ? "Tinggal sedikit" : "Tersedia";
 }
 
+const LABEL_AKSI = {
+  price_change: "Ubah harga",
+  stock_adjust: "Penyesuaian stok",
+  min_stock_change: "Ubah stok minimum",
+  void_return: "Void/retur",
+  role_change: "Ubah role",
+  admin_login: "Login admin",
+  otp_reset: "Reset 2FA",
+  review_moderate: "Moderasi ulasan",
+  size_guide_change: "Ubah panduan ukuran",
+};
+
 function stokPublik(s) {
   const tersedia = s.stok_fisik - s.stok_terpesan;
   return {
@@ -800,6 +812,19 @@ const server = createServer(async (req, res) => {
     return;
   }
 
+  if (path === "/api/v1/stok/opname" && method === "GET") {
+    if (!butuhAdmin(req, res)) return;
+    const daftar = [...state.opname.values()]
+      .sort((a, b) => b.created_at.localeCompare(a.created_at) || b.id - a.id)
+      .map(({ items, ...sesi }) => ({
+        ...sesi,
+        jumlah_varian: items.length,
+        jumlah_selisih: items.filter((i) => i.selisih !== 0).length,
+      }));
+    kirim(res, 200, halaman(daftar, url));
+    return;
+  }
+
   if (path === "/api/v1/stok/opname" && method === "POST") {
     if (!butuhAdmin(req, res)) return;
     const data = await bacaBody(req);
@@ -872,6 +897,35 @@ const server = createServer(async (req, res) => {
     sesi.status_label = "Diterapkan";
     sesi.applied_at = new Date().toISOString();
     kirim(res, 200, sesi);
+    return;
+  }
+
+  // ---- Fase 2: ringkasan dashboard ----
+
+  if (path === "/api/v1/laporan/ringkasan" && method === "GET") {
+    if (!butuhAdmin(req, res)) return;
+    const tersedia = (s) => s.stok_fisik - s.stok_terpesan;
+    kirim(res, 200, {
+      tanggal: new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta" }).format(new Date()),
+      penjualan_hari_ini: 0,
+      pesanan_hari_ini: 0,
+      pesanan_menunggu_pembayaran: 0,
+      produk_terjual_hari_ini: 0,
+      varian_stok_menipis: state.stok.filter((s) => tersedia(s) > 0 && tersedia(s) <= s.stok_minimum).length,
+      varian_stok_habis: state.stok.filter((s) => tersedia(s) <= 0).length,
+      aktivitas: [...state.audit]
+        .sort((a, b) => b.created_at.localeCompare(a.created_at) || b.id - a.id)
+        .slice(0, 5)
+        .map((a) => ({
+          id: a.id,
+          action: a.action,
+          aksi_label: LABEL_AKSI[a.action] ?? a.action,
+          pelaku: a.actor_email,
+          entity: a.entity,
+          entity_id: a.entity_id,
+          created_at: a.created_at,
+        })),
+    });
     return;
   }
 

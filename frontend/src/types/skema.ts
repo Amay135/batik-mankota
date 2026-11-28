@@ -36,4 +36,11 @@ export type Penyesuaian = Skema["Penyesuaian"];
 export type BuatOpname = Skema["BuatOpname"];
 export type Opname = Skema["Opname"];
 export type OpnameItem = Skema["OpnameItem"];
+export type OpnameRingkas = Skema["OpnameRingkas"];
+export type HalamanOpname = Skema["PaginatedOpnameRingkasList"];
+
+// Fase 2: ringkasan dashboard admin.
+export type RingkasanDasbor = Skema["RingkasanDasbor"];
+export type AktivitasDasbor = Skema["AktivitasDasbor"];
+
 export type Galat = Skema["Galat"];
