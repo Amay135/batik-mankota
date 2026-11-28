@@ -667,6 +667,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/pelanggan/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_pelanggan_list"];
+        put?: never;
+        post: operations["v1_pelanggan_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pelanggan/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_pelanggan_retrieve"];
+        put: operations["v1_pelanggan_update"];
+        post?: never;
+        delete: operations["v1_pelanggan_destroy"];
+        options?: never;
+        head?: never;
+        patch: operations["v1_pelanggan_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/pelanggan/{id}/pesanan/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_pelanggan_pesanan_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pelanggan/ringkasan/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_pelanggan_ringkasan_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/pesanan/": {
         parameters: {
             query?: never;
@@ -937,6 +1001,7 @@ export interface components {
             readonly id: number;
             jenis?: components["schemas"]["JenisEnum"];
             alt?: string;
+            /** Format: int64 */
             urutan?: number;
             readonly url: string | null;
         };
@@ -952,6 +1017,7 @@ export interface components {
         };
         ItemKeranjang: {
             readonly id: number;
+            /** Format: int64 */
             jumlah?: number;
             readonly varian: string;
             readonly produk: string;
@@ -966,7 +1032,9 @@ export interface components {
             warna: string;
             ukuran: string;
             sku: string;
+            /** Format: int64 */
             harga: number;
+            /** Format: int64 */
             jumlah: number;
             readonly subtotal: number;
         };
@@ -991,6 +1059,7 @@ export interface components {
             slug: string;
             /** @description Dipakai di kartu produk, mis. Pria */
             label_pendek: string;
+            /** Format: int64 */
             urutan?: number;
         };
         Keranjang: {
@@ -1076,7 +1145,9 @@ export interface components {
             readonly produk: string;
             readonly ukuran: string;
             readonly warna: string;
+            /** Format: int64 */
             system_qty: number;
+            /** Format: int64 */
             counted_qty: number;
             readonly selisih: number;
         };
@@ -1146,6 +1217,36 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["OpnameRingkas"][];
         };
+        PaginatedPelangganList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["Pelanggan"][];
+        };
+        PaginatedPesananPelangganList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["PesananPelanggan"][];
+        };
         PaginatedProdukListList: {
             jumlah: number;
             halaman: number;
@@ -1183,6 +1284,7 @@ export interface components {
             slug?: string;
             /** @description Dipakai di kartu produk, mis. Pria */
             label_pendek?: string;
+            /** Format: int64 */
             urutan?: number;
         };
         PatchedMinimumStok: {
@@ -1202,6 +1304,24 @@ export interface components {
             /** Format: date-time */
             readonly diperbarui?: string;
         };
+        /** @description Data pelanggan + statistik pesanan (dihitung, tidak disimpan sebagai snapshot). */
+        PatchedPelangganDetail: {
+            readonly id?: number;
+            nama?: string;
+            telepon?: string;
+            email?: string;
+            alamat?: string;
+            catatan?: string;
+            /** Format: date-time */
+            readonly dibuat?: string;
+            /** Format: date-time */
+            readonly diperbarui?: string;
+            readonly jumlah_transaksi?: number;
+            readonly total_belanja?: number;
+            /** Format: date-time */
+            readonly terakhir_belanja?: string | null;
+            readonly statistik?: components["schemas"]["StatistikPelanggan"];
+        };
         PatchedProdukAdmin: {
             readonly id?: number;
             nama?: string;
@@ -1219,7 +1339,10 @@ export interface components {
             perawatan?: string;
             cerita_judul?: string;
             cerita_isi?: string;
-            /** @description Rupiah, tanpa desimal */
+            /**
+             * Format: int64
+             * @description Rupiah, tanpa desimal
+             */
             harga?: number;
             /** Format: decimal */
             readonly rating?: string;
@@ -1277,12 +1400,50 @@ export interface components {
             warna?: components["schemas"]["WarnaEnum"];
             ukuran?: components["schemas"]["VarianAdminUkuranEnum"];
             sku?: string;
-            /** @description Harga beli/HPP, Rupiah tanpa desimal; hanya untuk admin */
+            /**
+             * Format: int64
+             * @description Harga beli/HPP, Rupiah tanpa desimal; hanya untuk admin
+             */
             harga_beli?: number;
             readonly qr_token?: string;
             aktif?: boolean;
             readonly stok?: number;
             readonly status_stok?: string;
+        };
+        /** @description Data pelanggan + statistik pesanan (dihitung, tidak disimpan sebagai snapshot). */
+        Pelanggan: {
+            readonly id: number;
+            nama: string;
+            telepon?: string;
+            email?: string;
+            alamat?: string;
+            catatan?: string;
+            /** Format: date-time */
+            readonly dibuat: string;
+            /** Format: date-time */
+            readonly diperbarui: string;
+            readonly jumlah_transaksi: number;
+            readonly total_belanja: number;
+            /** Format: date-time */
+            readonly terakhir_belanja: string | null;
+        };
+        /** @description Data pelanggan + statistik pesanan (dihitung, tidak disimpan sebagai snapshot). */
+        PelangganDetail: {
+            readonly id: number;
+            nama: string;
+            telepon?: string;
+            email?: string;
+            alamat?: string;
+            catatan?: string;
+            /** Format: date-time */
+            readonly dibuat: string;
+            /** Format: date-time */
+            readonly diperbarui: string;
+            readonly jumlah_transaksi: number;
+            readonly total_belanja: number;
+            /** Format: date-time */
+            readonly terakhir_belanja: string | null;
+            readonly statistik: components["schemas"]["StatistikPelanggan"];
         };
         Penyesuaian: {
             varian_id: number;
@@ -1291,7 +1452,7 @@ export interface components {
         };
         Pesanan: {
             nomor: string;
-            status?: components["schemas"]["PesananStatusEnum"];
+            status?: components["schemas"]["Status61aEnum"];
             readonly status_label: string;
             nama_lengkap: string;
             whatsapp: string;
@@ -1304,10 +1465,15 @@ export interface components {
             kode_pos: string;
             kurir?: string;
             voucher_kode?: string;
+            /** Format: int64 */
             subtotal: number;
+            /** Format: int64 */
             ongkir: number;
+            /** Format: int64 */
             promo_ongkir?: number;
+            /** Format: int64 */
             diskon?: number;
+            /** Format: int64 */
             total: number;
             metode_bayar: components["schemas"]["MetodeBayarEnum"];
             readonly metode_label: string;
@@ -1319,16 +1485,19 @@ export interface components {
             readonly dibuat: string;
             readonly item: components["schemas"]["ItemPesanan"][];
         };
-        /**
-         * @description * `menunggu_pembayaran` - Menunggu pembayaran
-         *     * `dibayar` - Sudah dibayar
-         *     * `diproses` - Sedang diproses
-         *     * `dikirim` - Dalam pengiriman
-         *     * `selesai` - Selesai
-         *     * `dibatalkan` - Dibatalkan
-         * @enum {string}
-         */
-        PesananStatusEnum: "menunggu_pembayaran" | "dibayar" | "diproses" | "dikirim" | "selesai" | "dibatalkan";
+        PesananPelanggan: {
+            nomor: string;
+            status?: components["schemas"]["Status61aEnum"];
+            readonly status_label: string;
+            /** Format: date-time */
+            readonly dibuat: string;
+            /** Format: int64 */
+            total: number;
+            metode_bayar: components["schemas"]["MetodeBayarEnum"];
+            readonly metode_label: string;
+            readonly produk: string[];
+            readonly jumlah_item: number;
+        };
         ProdukAdmin: {
             readonly id: number;
             nama: string;
@@ -1346,7 +1515,10 @@ export interface components {
             perawatan?: string;
             cerita_judul?: string;
             cerita_isi?: string;
-            /** @description Rupiah, tanpa desimal */
+            /**
+             * Format: int64
+             * @description Rupiah, tanpa desimal
+             */
             harga: number;
             /** Format: decimal */
             readonly rating: string;
@@ -1369,7 +1541,10 @@ export interface components {
             readonly teknik_label: string;
             readonly label: string;
             readonly deskripsi_singkat: string;
-            /** @description Rupiah, tanpa desimal */
+            /**
+             * Format: int64
+             * @description Rupiah, tanpa desimal
+             */
             harga: number;
             /** @description Tampil dengan lencana Pilihan Mankota */
             unggulan?: boolean;
@@ -1390,7 +1565,10 @@ export interface components {
             readonly teknik_label: string;
             readonly label: string;
             readonly deskripsi_singkat: string;
-            /** @description Rupiah, tanpa desimal */
+            /**
+             * Format: int64
+             * @description Rupiah, tanpa desimal
+             */
             harga: number;
             /** @description Tampil dengan lencana Pilihan Mankota */
             unggulan?: boolean;
@@ -1433,6 +1611,12 @@ export interface components {
             varian_stok_habis: number;
             aktivitas: components["schemas"]["AktivitasDasbor"][];
         };
+        RingkasanPelanggan: {
+            total_pelanggan: number;
+            pelanggan_dengan_transaksi: number;
+            total_transaksi: number;
+            total_nilai_transaksi: number;
+        };
         /**
          * @description * `admin` - Admin
          *     * `kasir` - Kasir
@@ -1450,12 +1634,30 @@ export interface components {
          * @enum {string}
          */
         StaffRoleEnum: "admin" | "kasir";
+        StatistikPelanggan: {
+            jumlah_transaksi: number;
+            total_belanja: number;
+            rata_rata_transaksi: number;
+            transaksi_selesai: number;
+            /** Format: date-time */
+            terakhir_belanja: string | null;
+        };
         /**
          * @description * `DRAFT` - Draf
          *     * `APPLIED` - Diterapkan
          * @enum {string}
          */
         Status41dEnum: "DRAFT" | "APPLIED";
+        /**
+         * @description * `menunggu_pembayaran` - Menunggu pembayaran
+         *     * `dibayar` - Sudah dibayar
+         *     * `diproses` - Sedang diproses
+         *     * `dikirim` - Dalam pengiriman
+         *     * `selesai` - Selesai
+         *     * `dibatalkan` - Dibatalkan
+         * @enum {string}
+         */
+        Status61aEnum: "menunggu_pembayaran" | "dibayar" | "diproses" | "dikirim" | "selesai" | "dibatalkan";
         Stok: {
             readonly varian: number;
             readonly sku: string;
@@ -1483,6 +1685,7 @@ export interface components {
         Ulasan: {
             readonly id: number;
             readonly nama: string;
+            /** Format: int64 */
             rating: number;
             teks?: string;
             /** Format: date-time */
@@ -1529,7 +1732,10 @@ export interface components {
             warna: components["schemas"]["WarnaEnum"];
             ukuran: components["schemas"]["VarianAdminUkuranEnum"];
             sku: string;
-            /** @description Harga beli/HPP, Rupiah tanpa desimal; hanya untuk admin */
+            /**
+             * Format: int64
+             * @description Harga beli/HPP, Rupiah tanpa desimal; hanya untuk admin
+             */
             harga_beli?: number;
             readonly qr_token: string;
             aktif?: boolean;
@@ -3239,6 +3445,224 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RingkasanDasbor"];
+                };
+            };
+        };
+    };
+    v1_pelanggan_list: {
+        parameters: {
+            query?: {
+                /**
+                 * @description * `asc` - asc
+                 *     * `desc` - desc
+                 */
+                arah?: "asc" | "desc";
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                per_halaman?: number;
+                q?: string;
+                /**
+                 * @description * `nama` - nama
+                 *     * `dibuat` - dibuat
+                 *     * `transaksi` - transaksi
+                 *     * `belanja` - belanja
+                 *     * `terakhir` - terakhir
+                 */
+                sortir?: "nama" | "dibuat" | "transaksi" | "belanja" | "terakhir";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedPelangganList"];
+                };
+            };
+        };
+    };
+    v1_pelanggan_create: {
+        parameters: {
+            query?: {
+                /**
+                 * @description * `asc` - asc
+                 *     * `desc` - desc
+                 */
+                arah?: "asc" | "desc";
+                q?: string;
+                /**
+                 * @description * `nama` - nama
+                 *     * `dibuat` - dibuat
+                 *     * `transaksi` - transaksi
+                 *     * `belanja` - belanja
+                 *     * `terakhir` - terakhir
+                 */
+                sortir?: "nama" | "dibuat" | "transaksi" | "belanja" | "terakhir";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Pelanggan"];
+                "application/x-www-form-urlencoded": components["schemas"]["Pelanggan"];
+                "multipart/form-data": components["schemas"]["Pelanggan"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Pelanggan"];
+                };
+            };
+        };
+    };
+    v1_pelanggan_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PelangganDetail"];
+                };
+            };
+        };
+    };
+    v1_pelanggan_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PelangganDetail"];
+                "application/x-www-form-urlencoded": components["schemas"]["PelangganDetail"];
+                "multipart/form-data": components["schemas"]["PelangganDetail"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PelangganDetail"];
+                };
+            };
+        };
+    };
+    v1_pelanggan_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    v1_pelanggan_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedPelangganDetail"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedPelangganDetail"];
+                "multipart/form-data": components["schemas"]["PatchedPelangganDetail"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PelangganDetail"];
+                };
+            };
+        };
+    };
+    v1_pelanggan_pesanan_list: {
+        parameters: {
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                per_halaman?: number;
+            };
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedPesananPelangganList"];
+                };
+            };
+        };
+    };
+    v1_pelanggan_ringkasan_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RingkasanPelanggan"];
                 };
             };
         };

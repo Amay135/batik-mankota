@@ -17,6 +17,14 @@ const HARAPAN_FASE_1 = [
   "ADM-16",
 ];
 
+// Fitur yang sudah ada di fase berikutnya.
+const FASE_MENU: Record<string, number> = {
+  ...Object.fromEntries(HARAPAN_FASE_1.map((id) => [id, 1])),
+  "ADM-01": 0,
+  "ADM-03": 0,
+  "ADM-18": 3,
+};
+
 const scope = readFileSync(
   fileURLToPath(new URL("../../../backend/apps/accounts/admin_scope.py", import.meta.url)),
   "utf8",
@@ -37,19 +45,19 @@ function faseDiRegistry() {
 }
 
 describe("ADMIN_MENU", () => {
-  it("menu dan tab inventaris mencakup persis fitur fase 1", () => {
+  it("menu dan tab inventaris mencakup persis fitur yang tersedia", () => {
     const tampil = new Set([
       ...SEMUA_ITEM.flatMap((item) => (item.id ? [item.id] : [])),
       ...INVENTARIS_TABS.map((tab) => tab.id),
     ]);
-    expect([...tampil].sort()).toEqual([...HARAPAN_FASE_1].sort());
+    expect([...tampil].sort()).toEqual([...Object.keys(FASE_MENU)].sort());
   });
 
-  it("tiap id ada di admin_scope.py dengan fase <= 1", () => {
+  it("tiap id ada di admin_scope.py sesuai fasenya", () => {
     const fase = faseDiRegistry();
-    for (const id of HARAPAN_FASE_1) {
+    for (const [id, harapan] of Object.entries(FASE_MENU)) {
       expect(fase[id], `${id} tidak ada di admin_scope.py`).toBeDefined();
-      expect(fase[id]).toBeLessThanOrEqual(1);
+      expect(fase[id]).toBe(harapan);
     }
   });
 
@@ -57,7 +65,6 @@ describe("ADMIN_MENU", () => {
     expect(SEMUA_ITEM.filter((item) => !item.href).map((item) => item.label)).toEqual([
       "Pesanan",
       "Pengadaan",
-      "Pelanggan",
       "Keuangan",
       "Laporan",
       "Pengaturan",

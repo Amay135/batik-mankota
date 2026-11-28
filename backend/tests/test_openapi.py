@@ -9,7 +9,7 @@ from apps.accounts.admin_scope import ADMIN_CAPABILITIES
 from apps.accounts.models import User
 from apps.accounts.permissions import ADMIN_2FA_AT_SESSION_KEY, ADMIN_2FA_SESSION_KEY
 
-FASE_SAAT_INI = 2
+FASE_SAAT_INI = 3
 
 
 @override_settings(DEBUG=True)

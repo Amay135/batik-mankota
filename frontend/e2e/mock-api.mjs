@@ -109,7 +109,18 @@ function reset() {
       { id: 1, kategori: 1, tabel: [["Ukuran", "Lingkar dada"], ["M", "100 cm"], ["L", "108 cm"]], diperbarui: sekarang },
     ],
     opname: new Map(),
-    urut: { kategori: 3, motif: 3, produk: 3, varian: 3, foto: 1, ulasan: 1, panduan: 2, opname: 1, mutasi: 2 },
+    pelanggan: [
+      { id: 1, nama: "Rina Wulandari", telepon: "081286901234", email: "rina@email.com", alamat: "Jl. Komang Raya No. 18", catatan: "", dibuat: "2026-09-01T03:00:00.000Z", diperbarui: "2026-09-01T03:00:00.000Z", jumlah_transaksi: 2, total_belanja: 730000, terakhir_belanja: "2026-10-20T03:00:00.000Z" },
+      { id: 2, nama: "Budi Santoso", telepon: "081234567890", email: "", alamat: "", catatan: "", dibuat: "2026-10-01T03:00:00.000Z", diperbarui: "2026-10-01T03:00:00.000Z", jumlah_transaksi: 0, total_belanja: 0, terakhir_belanja: null },
+    ],
+    riwayat: {
+      1: [
+        { nomor: "MK-261020-00001", status: "selesai", status_label: "Selesai", dibuat: "2026-10-20T03:00:00.000Z", total: 365000, metode_bayar: "transfer_bank", metode_label: "Transfer Bank", produk: ["Batik Parang"], jumlah_item: 1 },
+        { nomor: "MK-261018-00003", status: "dibayar", status_label: "Sudah dibayar", dibuat: "2026-10-18T03:00:00.000Z", total: 365000, metode_bayar: "qris", metode_label: "QRIS", produk: ["Batik Parang"], jumlah_item: 1 },
+        { nomor: "MK-261015-00002", status: "dibatalkan", status_label: "Dibatalkan", dibuat: "2026-10-15T03:00:00.000Z", total: 730000, metode_bayar: "qris", metode_label: "QRIS", produk: ["Batik Parang", "Batik Kosong"], jumlah_item: 2 },
+      ],
+    },
+    urut: { kategori: 3, motif: 3, produk: 3, varian: 3, foto: 1, ulasan: 1, panduan: 2, opname: 1, mutasi: 2, pelanggan: 3 },
   };
 }
 reset();
@@ -926,6 +937,149 @@ const server = createServer(async (req, res) => {
           created_at: a.created_at,
         })),
     });
+    return;
+  }
+
+  // ---- Fase 3: pelanggan & riwayat pembelian ----
+
+  const statistikPelanggan = (p) => {
+    const riwayat = state.riwayat[p.id] ?? [];
+    return {
+      jumlah_transaksi: p.jumlah_transaksi,
+      total_belanja: p.total_belanja,
+      rata_rata_transaksi: p.jumlah_transaksi
+        ? Math.floor(p.total_belanja / p.jumlah_transaksi)
+        : 0,
+      transaksi_selesai: riwayat.filter((o) => o.status === "selesai").length,
+      terakhir_belanja: p.terakhir_belanja,
+    };
+  };
+
+  const normalTelepon = (nilai) =>
+    String(nilai ?? "").replace(/\D/g, "").replace(/^62/, "0");
+
+  if (path === "/api/v1/pelanggan/ringkasan" && method === "GET") {
+    if (!butuhAdmin(req, res)) return;
+    kirim(res, 200, {
+      total_pelanggan: state.pelanggan.length,
+      pelanggan_dengan_transaksi: state.pelanggan.filter((p) => p.jumlah_transaksi > 0).length,
+      total_transaksi: state.pelanggan.reduce((n, p) => n + p.jumlah_transaksi, 0),
+      total_nilai_transaksi: state.pelanggan.reduce((n, p) => n + p.total_belanja, 0),
+    });
+    return;
+  }
+
+  if (path === "/api/v1/pelanggan" && method === "GET") {
+    if (!butuhAdmin(req, res)) return;
+    const q = (url.searchParams.get("q") ?? "").toLowerCase();
+    const kunci = { nama: "nama", dibuat: "dibuat", transaksi: "jumlah_transaksi", belanja: "total_belanja", terakhir: "terakhir_belanja" };
+    const field = kunci[url.searchParams.get("sortir")] ?? "nama";
+    const arah = url.searchParams.get("arah") === "desc" ? -1 : 1;
+    const baris = state.pelanggan
+      .filter(
+        (p) =>
+          !q ||
+          p.nama.toLowerCase().includes(q) ||
+          p.telepon.includes(q) ||
+          p.email.toLowerCase().includes(q),
+      )
+      .sort((a, b) => {
+        const x = a[field];
+        const y = b[field];
+        if (x === y) return a.id - b.id;
+        if (x === null) return 1;
+        if (y === null) return -1;
+        return (x > y ? 1 : -1) * arah;
+      });
+    kirim(res, 200, halaman(baris, url, 25));
+    return;
+  }
+
+  if (path === "/api/v1/pelanggan" && method === "POST") {
+    if (!butuhAdmin(req, res)) return;
+    const body = await bacaBody(req);
+    const nama = String(body.nama ?? "").trim();
+    if (!nama) {
+      kirim(res, 400, { nama: ["Nama pelanggan wajib diisi."] });
+      return;
+    }
+    const telepon = normalTelepon(body.telepon);
+    if (telepon && state.pelanggan.some((p) => p.telepon === telepon)) {
+      kirim(res, 400, { telepon: ["Nomor telepon sudah terdaftar pada pelanggan lain."] });
+      return;
+    }
+    const sekarang = new Date().toISOString();
+    const baru = {
+      id: state.urut.pelanggan++,
+      nama,
+      telepon,
+      email: String(body.email ?? "").trim().toLowerCase(),
+      alamat: String(body.alamat ?? "").trim(),
+      catatan: String(body.catatan ?? "").trim(),
+      dibuat: sekarang,
+      diperbarui: sekarang,
+      jumlah_transaksi: 0,
+      total_belanja: 0,
+      terakhir_belanja: null,
+    };
+    state.pelanggan.push(baru);
+    kirim(res, 201, baru);
+    return;
+  }
+
+  const pelangganDetail = path.match(/^\/api\/v1\/pelanggan\/(\d+)$/);
+  if (pelangganDetail) {
+    if (!butuhAdmin(req, res)) return;
+    const id = Number(pelangganDetail[1]);
+    const pelanggan = state.pelanggan.find((p) => p.id === id);
+    if (!pelanggan) {
+      kirim(res, 404, { detail: "Tidak ditemukan." });
+      return;
+    }
+    if (method === "GET") {
+      kirim(res, 200, { ...pelanggan, statistik: statistikPelanggan(pelanggan) });
+      return;
+    }
+    if (method === "PATCH" || method === "PUT") {
+      const body = await bacaBody(req);
+      if (body.telepon !== undefined) {
+        const telepon = normalTelepon(body.telepon);
+        if (telepon && state.pelanggan.some((p) => p.id !== id && p.telepon === telepon)) {
+          kirim(res, 400, { telepon: ["Nomor telepon sudah terdaftar pada pelanggan lain."] });
+          return;
+        }
+        pelanggan.telepon = telepon;
+      }
+      for (const k of ["nama", "email", "alamat", "catatan"]) {
+        if (body[k] !== undefined) pelanggan[k] = String(body[k]).trim();
+      }
+      pelanggan.diperbarui = new Date().toISOString();
+      kirim(res, 200, { ...pelanggan, statistik: statistikPelanggan(pelanggan) });
+      return;
+    }
+    if (method === "DELETE") {
+      if ((state.riwayat[id] ?? []).length > 0) {
+        kirim(res, 409, {
+          code: "PELANGGAN_PUNYA_TRANSAKSI",
+          message: "Pelanggan sudah memiliki transaksi dan tidak dapat dihapus.",
+        });
+        return;
+      }
+      state.pelanggan = state.pelanggan.filter((p) => p.id !== id);
+      kirim(res, 204);
+      return;
+    }
+  }
+
+  const pelangganRiwayat = path.match(/^\/api\/v1\/pelanggan\/(\d+)\/pesanan$/);
+  if (pelangganRiwayat && method === "GET") {
+    if (!butuhAdmin(req, res)) return;
+    const id = Number(pelangganRiwayat[1]);
+    if (!state.pelanggan.some((p) => p.id === id)) {
+      kirim(res, 404, { detail: "Tidak ditemukan." });
+      return;
+    }
+    kirim(res, 200, halaman(state.riwayat[id] ?? [], url, 25));
     return;
   }
 

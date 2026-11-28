@@ -7,6 +7,7 @@ from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
 from apps.catalog.models import Varian
+from apps.crm.services import pelanggan_dari_kontak
 from apps.inventory.exceptions import InsufficientStock
 from apps.inventory.models import StockMovement
 from apps.inventory.services import consume_direct
@@ -84,6 +85,7 @@ def buat_pesanan(user, data):
     pesanan = Pesanan.objects.create(
         nomor=_nomor_unik(),
         user=user,
+        pelanggan=pelanggan_dari_kontak(data["nama_lengkap"], data["whatsapp"], data["email"]),
         nama_lengkap=data["nama_lengkap"],
         whatsapp=data["whatsapp"],
         email=data["email"],

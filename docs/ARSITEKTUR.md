@@ -197,6 +197,8 @@ erDiagram
 
 Pesanan online dan POS memakai **satu tabel `orders_order`** dengan `channel`, sehingga laporan gabungan cukup satu query.
 
+Tahap 3 (pelanggan) direalisasikan sebagai `crm_pelanggan` (nama, telepon, email, alamat, catatan, dibuat, diperbarui) dan `orders_pesanan.pelanggan_id` (nullable, `ON DELETE PROTECT`). Statistik dan riwayat dihitung langsung dari pesanan, bukan snapshot. `tier`, `points_balance`, dan `crm_pointledger` belum dibuat karena fitur member belum masuk lingkup.
+
 ---
 
 ## 6. Alur Kritis
@@ -288,7 +290,7 @@ Setelah COMMIT, API katalog langsung menghitung `qty_on_hand − qty_reserved` d
 | Pengadaan | `/pengadaan/pemasok/`, `/pengadaan/pesanan/`, `/pengadaan/penerimaan/` | admin | rencana |
 | Keuangan & laporan | `/keuangan/rekening/`, `/keuangan/pengeluaran/`, `/keuangan/hutang/`; `/laporan/penjualan/`, `/laporan/laba-rugi/`, `/laporan/nilai-stok/`, `/laporan/{nama}/ekspor/` | admin | rencana |
 | Ringkasan dashboard | `GET /laporan/ringkasan/` (KPI hari ini, stok menipis/habis, aktivitas admin) | admin (+2FA) | sudah ada |
-| Pelanggan (CRM) | `/pelanggan/`, `/pelanggan/{id}/`, `/pelanggan/{id}/poin/`, `/pelanggan/voucher/` | admin; kasir (cari/daftar) | rencana |
+| Pelanggan (CRM) | `GET/POST /pelanggan/`, `GET/PUT/PATCH/DELETE /pelanggan/{id}/`, `GET /pelanggan/ringkasan/`, `GET /pelanggan/{id}/pesanan/` | admin; kasir (cari/daftar) | sudah ada (tanpa member) |
 | Audit | `GET /audit/` | admin | sudah ada |
 
 ---
